@@ -1,3 +1,5 @@
+import pandas as pd
+import tensorflow as tf
 
 def slice_dataset(DATASET_FILE_PATH, DATASET_SHEET_TITLE, GRANULARITY, SMOOTHING, MEAN, VAL_PERCENT, PAST_HISTORY, 
                   FUTURE_TARGET, STEP_SIZE_SLIDING_WINDOW, message, USE_REF_POINTS, REF_POINT1, REF_POINT2):
@@ -67,7 +69,7 @@ def process_data(DATASET_FILE_PATH, DATASET_SHEET_TITLE, GRANULARITY, SMOOTHING,
                                                                    x_test_all, y_test_all, x_plot, y_plot, 
                                                                    BATCH_SIZE, EPOCHS, SHUFFLE_BUFFER_SIZE)
     test_data_indexes = range(0, len(x_plot) * GRANULARITY, GRANULARITY) # Necessary for plotting
-    return batch_train_data, batch_val_data, batch_test_data, batch_plot_data, y_plot, len(x_train_all), len(x_val_all), test_data_indexes, datashape
+    return { "batch_train_data": batch_train_data, "batch_val_data": batch_val_data, "batch_test_data": batch_test_data}, y_plot, len(x_train_all), len(x_val_all), test_data_indexes, datashape
 
 # Definitions
 

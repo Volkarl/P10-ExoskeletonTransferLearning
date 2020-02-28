@@ -31,18 +31,20 @@ plt.rcParams["figure.figsize"] = (20,10)
 # REF_POINT1=0
 # REF_POINT2=7
 
+config = { "DATASET_FILE_PATH": DATASET_FILE_PATH, "DATASET_SHEET_TITLE": DATASET_SHEET_TITLE, "ATTEMPT_NAME": ATTEMPT_NAME, 
+           "GRANULARITY": GRANULARITY, "STEP_SIZE_SLIDING_WINDOW": STEP_SIZE_SLIDING_WINDOW, "FUTURE_TARGET": FUTURE_TARGET, 
+           "VAL_PERCENT": VAL_PERCENT, "EPOCHS": EPOCHS, "BATCH_SIZE": BATCH_SIZE}
 
-# TODO Pass objects to this function instead of this shit
-def run_all(DATASET_FILE_PATH, DATASET_SHEET_TITLE, GRANULARITY, STEP_SIZE_SLIDING_WINDOW, PAST_HISTORY, 
-            FUTURE_TARGET, VAL_PERCENT, EPOCHS, BATCH_SIZE, SMOOTHING, ATTEMPT_NAME, SHUFFLE_BUFFER_SIZE, MEAN,
-            USE_REF_POINTS, REF_POINT1, REF_POINT2, KERNEL_SIZE, FILTERS, PADDING): 
-    batched_train_data, batched_val_data, batch_test, test_ground_truth, train_slices, val_slices, test_data_indexes, data_shape = data.process_data(
-        DATASET_FILE_PATH, DATASET_SHEET_TITLE, GRANULARITY, SMOOTHING, VAL_PERCENT, PAST_HISTORY, 
-        FUTURE_TARGET, STEP_SIZE_SLIDING_WINDOW, BATCH_SIZE, EPOCHS, SHUFFLE_BUFFER_SIZE, MEAN, 
-        USE_REF_POINTS, REF_POINT1, REF_POINT2)
+hyperparams = { "PAST_HISTORY": PAST_HISTORY, "SMOOTHING": SMOOTHING, "SHUFFLE_BUFFER_SIZE": SMOOTHING, 
+                "KERNEL_SIZE": KERNEL_SIZE, "FILTERS": FILTERS, "PADDING": PADDING, 
+                "USE_REF_POINTS": USE_REF_POINTS, "REF_POINT1": REF_POINT1, "REF_POINT": REF_POINT, 
+                "USE_DILATION": USE_DILATION, "DILATION_RATE": DILATION_RATE }
+
+def run_all(config_dict, hyperparams_dict): 
+    batch_data_dict, train_slices, val_slices, test_data_indexes, data_shape = data.process_data(config_dict, hyperparams_dict)
     model, training_history, training_time = cnn.run_cnn(data_shape, batched_train_data, batched_val_data, train_slices, 
              val_slices, BATCH_SIZE, EPOCHS, FUTURE_TARGET, KERNEL_SIZE, FILTERS, PADDING, MIN_DELTA, PATIENCE) 
-    eval.evaluate_results(model, training_history, test_ground_truth, batch_test, test_data_indexes, training_time)
+    eval.evaluate_results(model, training_history, test_ground_truth, batched_test_data, test_data_indexes, training_time)
 
 # Load components
 
