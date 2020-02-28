@@ -9,11 +9,13 @@ def objective(x):
 # Initialize an empty trials database
 trials = Trials()
 
-space = {
-    "KERNEL_SIZE" : hp.uniform("KERNEL_SIZE", 2, 100),
-    "FILTERS" : hp.uniform("FILTERS", 2, 100),
-    "OPTIMIZER" : hp.choice("OPTIMIZER", "adadelta", "adam", "rmsprop")
-}
+#space = { "KERNEL_SIZE" : hp.uniform("KERNEL_SIZE", 2, 100),
+#          "FILTERS" : hp.uniform("FILTERS", 2, 100),
+#          "OPTIMIZER" : hp.choice("OPTIMIZER", ["adadelta", "adam", "rmsprop"]) }
+
+space = hp.uniform("x", 1, 100)
+# print hyperopt.pyll.stochastic.sample(space)
+
 # Define search spaces
 # MAKE SOME MORE
 
