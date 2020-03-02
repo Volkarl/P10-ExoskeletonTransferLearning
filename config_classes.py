@@ -1,6 +1,6 @@
 from hyperopt import hp, STATUS_OK
 
-class hyperparameters:
+class hyperparameter_list:
     def __init__(self):
         self.past_history = "past_history"
         self.smoothing = "smoothing"
