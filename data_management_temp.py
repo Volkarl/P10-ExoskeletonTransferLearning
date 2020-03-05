@@ -4,10 +4,12 @@ def process_data(config: configuration, hyplist: hyperparameter_list, hyperparam
     paths, titles = config.dataset_file_paths, config.dataset_sheet_titles
     sheet_num = len(paths) - 1
     
-    x_train_all, y_train_all, x_val_all, y_val_all, _ = process_multiple_sheets(0, sheet_num - 1, paths, titles, GRANULARITY, SMOOTHING, MEAN, VAL_PERCENT, PAST_HISTORY, FUTURE_TARGET, STEP_SIZE_SLIDING_WINDOW, USE_REF_POINTS, REF_POINT1, REF_POINT2, "TRAIN SET")
-    x_test_all, y_test_all, _, _, _ = process_multiple_sheets(sheet_num - 1, sheet_num, paths, titles, GRANULARITY, SMOOTHING, MEAN, 0, PAST_HISTORY, FUTURE_TARGET, STEP_SIZE_SLIDING_WINDOW, USE_REF_POINTS, REF_POINT1, REF_POINT2, "TEST SET")
-    x_plot, y_plot, _, _, datashape = process_multiple_sheets(sheet_num - 1, sheet_num, paths, titles, GRANULARITY, SMOOTHING, MEAN, 0, PAST_HISTORY, FUTURE_TARGET, STEP_SIZE_SLIDING_WINDOW, USE_REF_POINTS, REF_POINT1, REF_POINT2, "PLOTTING SET")
-    # The last one is used only for plotting, such that it doesn't take forever
+    # Have loop that processes single sheet, sends to fit, then processes next
+
+
+    x_train_all, y_train_all, x_val_all, y_val_all, _ = process_multiple_sheets(0, sheet_num - 1, paths, titles, config, hyplist, hyperparameter_dict, "TRAIN SET")
+    x_test_all, y_test_all, _, _, datashape = process_multiple_sheets(sheet_num - 1, sheet_num, paths, titles, GRANULARITY, SMOOTHING, MEAN, 0, PAST_HISTORY, FUTURE_TARGET, STEP_SIZE_SLIDING_WINDOW, USE_REF_POINTS, REF_POINT1, REF_POINT2, "TEST SET")
+    # What about my validation data set percentage thing?
 
     batch_train_data, batch_val_data, batch_test_data, batch_plot_data = batch_data(x_train_all, y_train_all, x_val_all, y_val_all, 
                                                                    x_test_all, y_test_all, x_plot, y_plot, 
