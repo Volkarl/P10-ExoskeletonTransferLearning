@@ -75,7 +75,7 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
 
 def adaboost():
     for sheet in sheets:
-        train,val,test = processsheet(sheet, 0, 0.8, 0.9, 1)
+        train,val,test = processsheet(sheet, config.ada_datasplit)
         weaklearner = model.compile()
         weaklearner.fit(train, val)
         weaklearner.eval(test)
@@ -85,7 +85,7 @@ def adaboost():
 def cnn():
     cnn = model.compile()
     for sheet in sheets[:-1]:
-        train,val,_ = processsheet(sheet, 0, 0.9, 1, 1)
+        train,val,_ = data.process_sheet(sheet, config.cnn_datasplit)
         cnn.fit(train, val)
-    _,_,test = processsheet(sheet[-1], 0, 0, 0, 1)
+    _,_,test = processsheet(sheet[-1], config.cnn_testsplit)
     cnn.eval(test) # make into a evaluation function that does stuff like save execution time in a file!
