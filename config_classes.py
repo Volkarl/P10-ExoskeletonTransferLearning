@@ -37,7 +37,7 @@ class hyperparameter_list:
 
 class configuration:
     def __init__(self, dataset_file_paths, dataset_sheet_titles, attempt_name, granularity, step_size_sliding_window, 
-                 future_target, val_percent, epochs, batch_size): 
+                 future_target, val_percent, epochs, batch_size, min_delta, patience): 
         self.dataset_file_paths = dataset_file_paths
         self.dataset_sheet_titles = dataset_sheet_titles
         self.attempt_name = attempt_name
@@ -47,3 +47,8 @@ class configuration:
         self.val_percent = val_percent
         self.epochs = epochs
         self.batch_size = batch_size
+        self.min_delta = min_delta
+        self.patience = patience
+        self.ada_datasplit = (0, 0.8, 0.9, 1)
+        self.cnn_datasplit = (0, 0.9, 1, 1)
+        self.cnn_testsplit = (0, 0, 0, 1)
