@@ -14,6 +14,7 @@ class hyperparameter_list:
         self.ref_point2 = "ref_point2"
         self.use_dilation = "use_dilation"
         self.dilation_rate = "dilation_rate"
+        self.layer_amount = "layer_amount"
 
     @staticmethod
     def space(self):
