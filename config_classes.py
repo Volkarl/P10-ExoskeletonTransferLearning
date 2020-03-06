@@ -37,19 +37,17 @@ class hyperparameter_list:
         }
 
 class configuration:
-    def __init__(self, dataset_file_paths, dataset_sheet_titles, attempt_name, granularity, step_size_sliding_window, 
-                 future_target, val_percent, epochs, batch_size, min_delta, patience): 
-        self.dataset_file_paths = dataset_file_paths
-        self.dataset_sheet_titles = dataset_sheet_titles
-        self.attempt_name = attempt_name
-        self.granularity = granularity
-        self.step_size_sliding_window = step_size_sliding_window
-        self.future_target = future_target
-        self.val_percent = val_percent
-        self.epochs = epochs
-        self.batch_size = batch_size
-        self.min_delta = min_delta
-        self.patience = patience
+    def __init__(self): 
+        self.dataset_file_paths = ["Datasets\\SingleSessionData.xlsx","Datasets\\SingleSessionData.xlsx","Datasets\\SingleSessionData.xlsx","Datasets\\SingleSessionData.xlsx", "Datasets\\SingleSessionData.xlsx","Datasets\\SessionToSessionOne.xlsx","Datasets\\SessionToSessionOne.xlsx","Datasets\\SessionToSessionOne.xlsx","Datasets\\SessionToSessionOne.xlsx","Datasets\\SessionToSessionTwo.xlsx","Datasets\\SessionToSessionTwo.xlsx","Datasets\\SessionToSessionTwo.xlsx","Datasets\\SessionToSessionTwo.xlsx","Datasets\\SessionToSessionThree.xlsx","Datasets\\SessionToSessionThree.xlsx","Datasets\\SessionToSessionThree.xlsx","Datasets\\SessionToSessionThree.xlsx","Datasets\\SessionToSessionFour.xlsx","Datasets\\SessionToSessionFour.xlsx","Datasets\\SessionToSessionFour.xlsx","Datasets\\SessionToSessionFour.xlsx"]
+        self.dataset_sheet_titles = ["data_Uniform","data_NonUniform","data_NonUniformWithPause","data_NonUniformTwo", "data_UniformWithPause","data_Uniform","data_NonUniform","data_NonUniformWithPause","data_UniformWithPause","data_Uniform","data_UniformTwo","data_NonUniform","data_NonUniformTwo","data_Uniform","data_UniformTwo","data_NonUniform","data_NonUniformTwo","data_NonUniform","data_NonUniformTwo","data_Uniform","data_UniformTwo"]
+        self.attempt_name = "attempt_name"
+        self.granularity = 1
+        self.step_size_sliding_window = 1
+        self.future_target = 1
+        self.epochs = 5
+        self.batch_size = 500
+        self.min_delta = 0.0001
+        self.patience = 20
         self.ada_datasplit = (0, 0.8, 0.9, 1)
         self.cnn_datasplit = (0, 0.9, 1, 1)
         self.cnn_testsplit = (0, 0, 0, 1)

@@ -27,7 +27,7 @@ def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyp
 
     batch_train, batch_val, batch_test = batch_data(x_train, y_train, x_val, y_val, x_test, y_test, config.batch_size, 
                                                     config.epochs, hyperparameter_dict[hyplist.shuffle_buffer_size])
-    return batch_train, batch_val, batch_test, datashape
+    return batch_train, batch_val, batch_test, datashape, len(x_train), len(x_val)
 
 
 def batch_data(x_train, y_train, x_val, y_val, x_test, y_test, batch_size, epochs, shuffle_buffer_size):
