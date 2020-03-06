@@ -85,7 +85,7 @@ def adaboost():
 def cnn():
     cnn = model.compile()
     for sheet in sheets[:-1]:
-        train,val,_ = data.process_sheet(sheet, config.cnn_datasplit)
-        cnn.fit(train, val)
+        train,val,_,shape = data.process_sheet(sheet, config.cnn_datasplit)
+        cnn.fit(train, val, shape)
     _,_,test = processsheet(sheet[-1], config.cnn_testsplit)
     cnn.eval(test) # make into a evaluation function that does stuff like save execution time in a file!

@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+import tensorflow as tf
 from config_classes import hyperparameter_list, configuration
 
 # Data layout in the xlsx files
@@ -12,37 +14,59 @@ def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyp
     indexes, features, ground_truth = split_data(raw_data, config.granularity, config.smoothing)
     if(hyperparameter_dict[hyplist.use_ref_points]): 
         features = calc_ref_features(features, hyperparameter_dict(hyplist.ref_point1), hyperparameter_dict(hyplist.ref_point2))
+    x_train, y_train, x_val, y_val, x_test, y_test = slice_data(indexes, features, ground_truth, datasplit, hyperparameter_dict[hyplist.past_history], config)
+    # Data is now sliced into past_history slices
+    
+    
+    
+    type(x_train)
+    
+    
+    
+    datashape = x_train.shape[-2:]
+
+    batch_train, batch_val, batch_test = batch_data(x_train, y_train, x_val, y_val, x_test, y_test, config.batch_size, 
+                                                    config.epochs, hyperparameter_dict[hyplist.shuffle_buffer_size])
+    return batch_train, batch_val, batch_test, datashape
 
 
+def batch_data(x_train, y_train, x_val, y_val, x_test, y_test, batch_size, epochs, shuffle_buffer_size):
+    batched_train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+    if shuffle_buffer_size != 0:
+        batched_train_data = batched_train_data.shuffle(shuffle_buffer_size)
+    batched_train_data = batched_train_data.batch(batch_size).repeat(epochs)
 
-    # TODO FIX THE ONE BELOW
-    x_train, y_train, x_val, y_val, x_test, y_test = slice_data(indexes, features, ground_truth, hyperparameter_dict[hyplist.past_history], 
-                                                FUTURE_TARGET, STEP_SIZE_SLIDING_WINDOW, GRANULARITY)
-    return x_train, y_train, x_val, y_val, x_test, y_test
+    batched_val_data = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(batch_size).repeat(epochs)
+    batched_test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(1) # batch size of 1, no repeat
+    return batched_train_data, batched_val_data, batched_test_data
 
 
-def slice_data(indexes, features, ground_truth, VAL_PERCENT, PAST_HISTORY, FUTURE_TARGET, 
-               STEP_SIZE_SLIDING_WINDOW, GRANULARITY):
-    (train_start, train_end, val_end, test_end) = datasplit
-
-
+def slice_data(indexes, features, ground_truth, datasplit, past_history, config: configuration):
+    (train_start, val_start, test_start) = datasplit
+    ft, sssw, gran = config.future_target, config.step_size_sliding_window, config.granularity
 
     dataset = features.values
     observations = len(dataset)
-    val_split = int(observations * (1 - VAL_PERCENT))
-        
-    x_train, y_train = multivariate_data(dataset, ground_truth.values, 0,
-                                         val_split, PAST_HISTORY, FUTURE_TARGET, 
-                                         STEP_SIZE_SLIDING_WINDOW, GRANULARITY, single_step = False, 
-                                         print_index = False)
-    x_val, y_val = multivariate_data(dataset, ground_truth.values, val_split, 
-                                         None, PAST_HISTORY, FUTURE_TARGET, 
-                                         STEP_SIZE_SLIDING_WINDOW, GRANULARITY, single_step=False, 
-                                         print_index = False)
-    
-    return x_train, y_train, x_val, y_val
+    x = lambda a: int(observations * a)
+    train_start_num, val_start_num, test_start_num = x(train_start), x(val_start), x(test_start)
 
+    x_train, y_train = multivariate_data(dataset, ground_truth.values, train_start_num, val_start_num, past_history, ft, sssw, gran)
+    x_val, y_val = multivariate_data(dataset, ground_truth.values, val_start_num, test_start_num, past_history, ft, sssw, gran)
+    x_test, y_test = multivariate_data(dataset, ground_truth.values, test_start_num, None, past_history, ft, sssw, gran)
+    return x_train, y_train, x_val, y_val, x_test, y_test
 
+# Create array of all sliding windows of the data
+def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_index, history_size,
+                      target_size, step, granularity):
+    data, labels = [], []
+    start_index = start_index + history_size 
+    if end_index is None:
+        end_index = len(dataset_features) - target_size 
+    for i in range(start_index, end_index): # start 100, end 790. 
+        indices = range(i-history_size, i, step) # range(0, 100) step size of 1          --- our sliding window
+        data.append(dataset_features[indices]) # append new array that contains all values within our sliding window
+        labels.append(dataset_ground_truth[i:i+target_size])
+    return np.array(data), np.array(labels)
 
 def calc_ref_features(features, ref_point1, ref_point2):
     relative_features1 = [subtract_refvalue(obs, obs[ref_point1]) for obs in features.values]
