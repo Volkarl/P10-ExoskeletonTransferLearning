@@ -2,7 +2,7 @@ from config_classes import hyperparameter_list, configuration
 import tensorflow as tf
 from timeit import default_timer as timer
 
-optimizer_dict = {"adadelta": tf.keras.optimizers.adadelta(), "adam": tf.keras.optimizers.adam(), "rmsprop": tf.keras.optimizers.RMSprop()}
+optimizer_dict = {'adadelta': tf.keras.optimizers.Adadelta(), 'adam': tf.keras.optimizers.Adam(), 'rmsprop': tf.keras.optimizers.RMSprop()}
 
 def compile_model_cnn(data_shape, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     model = tf.keras.models.Sequential()

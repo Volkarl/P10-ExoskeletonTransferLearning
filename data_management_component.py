@@ -123,7 +123,7 @@ def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_i
         if print_index: print("A", i,)
         indices = range(i-history_size, i, step) # range(0, 100) step size of 1          --- our sliding window
         data.append(dataset_features[indices]) # append new array that contains all values within our sliding window
-        if single_step:
+        if single_step: #They both give the same result when target_size is 1
             labels.append(dataset_ground_truth[i+target_size])
         else:
             labels.append(dataset_ground_truth[i:i+target_size])

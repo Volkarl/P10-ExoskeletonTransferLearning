@@ -65,7 +65,7 @@ def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_i
     for i in range(start_index, end_index): # start 100, end 790. 
         indices = range(i-history_size, i, step) # range(0, 100) step size of 1          --- our sliding window
         data.append(dataset_features[indices]) # append new array that contains all values within our sliding window
-        labels.append(dataset_ground_truth[i:i+target_size])
+        labels.append(dataset_ground_truth[i+target_size])
     return np.array(data), np.array(labels)
 
 def calc_ref_features(features, ref_point1, ref_point2):
