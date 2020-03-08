@@ -16,7 +16,7 @@ class hyperparameter_list:
         self.dilation_rate = "dilation_rate"
         self.layer_amount = "layer_amount"
 
-    @staticmethod
+    #@staticmethod
     def space(self):
         return {
           self.kernel_size: hp.uniform(self.kernel_size, 2, 100),

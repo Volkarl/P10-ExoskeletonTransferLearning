@@ -18,7 +18,7 @@ config = configuration()
 hyplist = hyperparameter_list()
 partial_objective = partial(objective, config = config, hyplist = hyplist)
 # This is basically function currying. Defines our objective function with the config_dict parameter already present
-opt.perform_hyperopt(partial_objective, hyplist.space, 100)
+opt.perform_hyperopt(partial_objective, hyplist.space(), 100)
 
 
 def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
