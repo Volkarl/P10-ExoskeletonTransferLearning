@@ -7,7 +7,6 @@ class hyperparameter_list:
         self.shuffle_buffer_size = "shuffle_buffer_size"
         self.kernel_size = "kernel_size"
         self.filters = "filters"
-        self.padding = "padding"
         self.optimizer = "optimizer"
         self.use_ref_points = "use_ref_points"
         self.ref_point1 = "ref_point1"
@@ -19,21 +18,18 @@ class hyperparameter_list:
     #@staticmethod
     def space(self):
         return {
-          self.kernel_size: hp.uniform(self.kernel_size, 2, 100),
-          self.filters: hp.uniform(self.filters, 2, 100),
-          self.optimizer: hp.choice(self.optimizer, ["adadelta", "adam", "rmsprop"])
-        # past_history, 
-        # smoothing, 
-        # shuffle_buffer_size, 
-        # kernel_size, 
-        # filters, 
-        # padding, 
-        # optimizer, 
-        # use_ref_points, 
-        # ref_point1, 
-        # ref_point2, 
-        # use_dilation, 
-        # dilation_rate
+
+            self.past_history: hp.uniform(self.past_history, 1, 300),
+            self.smoothing: hp.choice(self.smoothing, [1, 25, 50, 75, 100]),
+            self.shuffle_buffer_size: hp.uniform(self.shuffle_buffer_size, 0, 100),
+            self.kernel_size: hp.uniform(self.kernel_size, 2, 100),
+            self.filters: hp.uniform(self.filters, 2, 100),
+            self.optimizer: hp.choice(self.optimizer, ["adadelta", "adam", "rmsprop"]),
+            self.use_ref_points: hp.choice(self.use_ref_points, [True, False]),
+            self.ref_point1: hp.choice(self.ref_point1, [0, 1, 2, 3]),
+            self.ref_point2: hp.choice(self.ref_point2, [4, 5, 6, 7]),
+            self.use_dilation: hp.choice(self.use_dilation, [True, False]),
+            self.layer_amount: 1 + hp.randint(self.layer_amount, 10) # Values distributed in interval: (0, 10]
         }
 
 class configuration:
@@ -48,6 +44,10 @@ class configuration:
         self.batch_size = 500
         self.min_delta = 0.0001
         self.patience = 20
+        self.padding = 2
+        self.kernel_initializer = 'uniform'
+        self.activation= 'relu'
+        self.dialation_rate = 2
         self.ada_datasplit = (0, 0.8, 0.9, 1)
         self.cnn_datasplit = (0, 0.9, 1, 1)
         self.cnn_testsplit = (0, 0, 0, 1)

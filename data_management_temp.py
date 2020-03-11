@@ -11,7 +11,7 @@ column_ground_truth = columns_data[10]
 
 def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     raw_data = load_dataset(sheet_path, sheet_title, config.granularity)
-    indexes, features, ground_truth = split_data(raw_data, config.granularity, config.smoothing)
+    indexes, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict(hyplist.smoothing))
     if(hyperparameter_dict[hyplist.use_ref_points]): 
         features = calc_ref_features(features, hyperparameter_dict(hyplist.ref_point1), hyperparameter_dict(hyplist.ref_point2))
     x_train, y_train, x_val, y_val, x_test, y_test = slice_data(indexes, features, ground_truth, datasplit, hyperparameter_dict[hyplist.past_history], config)
