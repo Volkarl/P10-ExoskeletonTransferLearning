@@ -19,11 +19,11 @@ class hyperparameter_list:
     def space(self):
         return {
 
-            self.past_history: hp.uniform(self.past_history, 1, 300),
+            self.past_history: 1 + hp.randint(self.past_history, 300),
             self.smoothing: hp.choice(self.smoothing, [1, 25, 50, 75, 100]),
-            self.shuffle_buffer_size: hp.uniform(self.shuffle_buffer_size, 0, 100),
-            self.kernel_size: hp.uniform(self.kernel_size, 2, 100),
-            self.filters: hp.uniform(self.filters, 2, 100),
+            self.shuffle_buffer_size: 1 + hp.randint(self.shuffle_buffer_size, 100),
+            self.kernel_size: 2 + hp.randint(self.kernel_size, 100),
+            self.filters: 1 + hp.randint(self.filters, 100),
             self.optimizer: hp.choice(self.optimizer, ["adadelta", "adam", "rmsprop"]),
             self.use_ref_points: hp.choice(self.use_ref_points, [True, False]),
             self.ref_point1: hp.choice(self.ref_point1, [0, 1, 2, 3]),
@@ -48,6 +48,6 @@ class configuration:
         self.kernel_initializer = 'uniform'
         self.activation= 'relu'
         self.dialation_rate = 2
-        self.ada_datasplit = (0, 0.8, 0.9, 1)
-        self.cnn_datasplit = (0, 0.9, 1, 1)
-        self.cnn_testsplit = (0, 0, 0, 1)
+        self.ada_datasplit = (0, 0.8, 0.9)
+        self.cnn_datasplit = (0, 0.9, 1)
+        self.cnn_testsplit = (0, 0, 0)

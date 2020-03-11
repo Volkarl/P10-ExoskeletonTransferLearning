@@ -11,9 +11,9 @@ column_ground_truth = columns_data[10]
 
 def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     raw_data = load_dataset(sheet_path, sheet_title, config.granularity)
-    indexes, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict(hyplist.smoothing))
+    indexes, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict[hyplist.smoothing])
     if(hyperparameter_dict[hyplist.use_ref_points]): 
-        features = calc_ref_features(features, hyperparameter_dict(hyplist.ref_point1), hyperparameter_dict(hyplist.ref_point2))
+        features = calc_ref_features(features, hyperparameter_dict[hyplist.ref_point1], hyperparameter_dict[hyplist.ref_point2])
     x_train, y_train, x_val, y_val, x_test, y_test = slice_data(indexes, features, ground_truth, datasplit, hyperparameter_dict[hyplist.past_history], config)
     # Data is now sliced into past_history slices
     
@@ -61,7 +61,7 @@ def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_i
     data, labels = [], []
     start_index = start_index + history_size 
     if end_index is None:
-        end_index = len(dataset_features) - target_size 
+        end_index = len(dataset_features) - target_size - 1 # TODO: DOES THIS -1 MAKE SENSE?
     for i in range(start_index, end_index): # start 100, end 790. 
         indices = range(i-history_size, i, step) # range(0, 100) step size of 1          --- our sliding window
         data.append(dataset_features[indices]) # append new array that contains all values within our sliding window

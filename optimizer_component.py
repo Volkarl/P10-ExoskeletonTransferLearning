@@ -16,6 +16,9 @@ def perform_hyperopt(objective, space, max_evals):
     # print hyperopt.pyll.stochastic.sample(space)
 
 
+
+    # TODO: I already have a max_evals value. Maybe split it up and perform pickling inbetween?
+
     # Perform 100 evaluations on the search space
     best = fmin(objective,
         space=space,
