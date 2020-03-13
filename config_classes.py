@@ -18,7 +18,7 @@ class hyperparameter_list:
     def space(self):
         return {
 
-            self.kernel_size: 2 + hp.randint(self.kernel_size, 20),
+            self.kernel_size: 2 + hp.randint(self.kernel_size, 4), # This needs to be a small value, otherwise it will cause dimensionality errors unless past_history divided by layer size is sufficiently large
             self.past_history: 22 + hp.randint(self.past_history, 300), # Must be larger than kernel size
             self.smoothing: hp.choice(self.smoothing, [1, 25, 50, 75, 100]),
             self.shuffle_buffer_size: 1 + hp.randint(self.shuffle_buffer_size, 100),
@@ -28,7 +28,7 @@ class hyperparameter_list:
             self.ref_point1: hp.choice(self.ref_point1, [0, 1, 2, 3]),
             self.ref_point2: hp.choice(self.ref_point2, [4, 5, 6, 7]),
             self.use_dilation: hp.choice(self.use_dilation, [True, False]),
-            self.layer_amount: 1 + hp.randint(self.layer_amount, 10) # Values distributed in interval: (0, 10]
+            self.layer_amount: 1 + hp.randint(self.layer_amount, 8) # Values distributed in interval: (0, 8]
         }
 
 class configuration:

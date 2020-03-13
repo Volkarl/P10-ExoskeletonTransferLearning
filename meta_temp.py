@@ -1,7 +1,7 @@
 # Imports
 import tensorflow as tf
 print(tf.test.is_gpu_available())
-from hyperopt import STATUS_OK
+from hyperopt import STATUS_OK, STATUS_FAIL
 from functools import partial
 
 from config_classes import hyperparameter_list, configuration
@@ -11,8 +11,14 @@ import cnn_temp as cnn
 import evaluation_component as eva
 
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
-    loss, training_time = run_all(config, hyplist, hyperparameter_dict)
-    return { 'loss': loss, 'status': STATUS_OK, 'training_time': training_time }
+    try:
+        loss, training_time = run_all(config, hyplist, hyperparameter_dict)
+        return { "loss": loss, 
+                 "training_time": training_time,
+                 "status": STATUS_OK }
+    except Exception as e:
+        return { "status": STATUS_FAIL,
+                 "exception": str(e) }
 
 def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     # Config_dict is set by this file. Specific hyperparams are given by hyperopt
@@ -23,7 +29,7 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     # Or maybe just figure out how to get data out of my batched objects, but I'm not sure if this even works
     _, _, _, shape, _, _ = data.process_sheet(config.dataset_file_paths[0], config.dataset_sheet_titles[0], config.cnn_datasplit, config, hyplist, hyperparameter_dict)
     model = cnn.compile_model_cnn(shape, config, hyplist, hyperparameter_dict)
-    for path, sheet in config.dataset_file_paths[:-1], config.dataset_sheet_titles[:-1]: # All sheets except the last
+    for path, sheet in zip(config.dataset_file_paths[:-1], config.dataset_sheet_titles[:-1]): # All sheets except the last
         train, val, _, _, train_slices, val_slices = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
         history, training_time = cnn.fit_model_cnn(model, train, val, train_slices, val_slices, config, hyplist, hyperparameter_dict)
         model.fit(train, val, shape)

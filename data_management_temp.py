@@ -18,8 +18,7 @@ def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyp
     # Data is now sliced into past_history slices
     
     
-    
-    type(x_train)
+    print(type(x_train))
     
     
     

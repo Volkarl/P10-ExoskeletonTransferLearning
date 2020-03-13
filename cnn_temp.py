@@ -15,7 +15,7 @@ def compile_model_cnn(data_shape, config: configuration, hyplist: hyperparameter
 
     for i in range(hyperparameter_dict[hyplist.layer_amount]):
         if(hyperparameter_dict[hyplist.use_dilation]):
-            model.add(tf.keras.layers.Conv1D(filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation, dilation_rate=i**config.dilation_rate))
+            model.add(tf.keras.layers.Conv1D(filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation, dilation_rate=config.dilation_rate**i))
         else:
             model.add(tf.keras.layers.Conv1D(filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation))
     model.add(tf.keras.layers.Flatten())
