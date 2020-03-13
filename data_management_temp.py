@@ -16,14 +16,8 @@ def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyp
         features = calc_ref_features(features, hyperparameter_dict[hyplist.ref_point1], hyperparameter_dict[hyplist.ref_point2])
     x_train, y_train, x_val, y_val, x_test, y_test = slice_data(indexes, features, ground_truth, datasplit, hyperparameter_dict[hyplist.past_history], config)
     # Data is now sliced into past_history slices
-    
-    
-    print(type(x_train))
-    
-    
-    
-    datashape = x_train.shape[-2:]
 
+    datashape = x_train.shape[-2:]
     batch_train, batch_val, batch_test = batch_data(x_train, y_train, x_val, y_val, x_test, y_test, config.batch_size, 
                                                     config.epochs, hyperparameter_dict[hyplist.shuffle_buffer_size])
     return batch_train, batch_val, batch_test, datashape, len(x_train), len(x_val)

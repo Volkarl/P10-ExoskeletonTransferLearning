@@ -17,7 +17,6 @@ class hyperparameter_list:
     #@staticmethod
     def space(self):
         return {
-
             self.kernel_size: 2 + hp.randint(self.kernel_size, 4), # This needs to be a small value, otherwise it will cause dimensionality errors unless past_history divided by layer size is sufficiently large
             self.past_history: 22 + hp.randint(self.past_history, 300), # Must be larger than kernel size
             self.smoothing: hp.choice(self.smoothing, [1, 25, 50, 75, 100]),
@@ -48,5 +47,5 @@ class configuration:
         self.activation= 'relu'
         self.dilation_rate = 2
         self.ada_datasplit = (0, 0.8, 0.9)
-        self.cnn_datasplit = (0, 0.9, 1)
-        self.cnn_testsplit = (0, 0, 0)
+        self.cnn_datasplit = (0, 0.9, 1) # Empty test set
+        self.cnn_testsplit = (0, 0, 0) # All values will be part of the test set
