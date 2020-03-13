@@ -7,14 +7,20 @@ optimizer_dict = {'adadelta': tf.keras.optimizers.Adadelta(), 'adam': tf.keras.o
 def compile_model_cnn(data_shape, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     model = tf.keras.models.Sequential()
     ks = hyperparameter_dict[hyplist.kernel_size].item() # This is required because my searchspace doesn't pass proper, native int values, for god knows what reason
+
+    model.add(tf.keras.layers.InputLayer(input_shape=data_shape))
+
+    #if(hyperparameter_dict[hyplist.use_dilation]): model.add(tf.keras.layers.Conv1D(input_shape=data_shape, filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation, dilation_rate=i**config.dilation_rate))
+    #else: model.add(tf.keras.layers.Conv1D(input_shape=data_shape, filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation))
+
     for i in range(hyperparameter_dict[hyplist.layer_amount]):
         if(hyperparameter_dict[hyplist.use_dilation]):
-            model.add(tf.keras.layers.Conv1D(filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, input_shape=data_shape, kernel_initializer=config.kernel_initializer, activation=config.activation, dilation_rate=i**config.dilation_rate))
+            model.add(tf.keras.layers.Conv1D(filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation, dilation_rate=i**config.dilation_rate))
         else:
-            model.add(tf.keras.layers.Conv1D(filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, input_shape=data_shape, kernel_initializer=config.kernel_initializer, activation=config.activation))
+            model.add(tf.keras.layers.Conv1D(filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation))
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(config.future_target)) 
-    model.compile(optimizer=optimizer_dict[hyplist.optimizer], loss='mae', metrics=['mae', 'mape', 'mse'])
+    model.compile(optimizer=hyperparameter_dict[hyplist.optimizer], loss='mae', metrics=['mae', 'mape', 'mse'])
     model.summary()
     return model
 

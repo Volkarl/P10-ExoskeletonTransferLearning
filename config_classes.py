@@ -43,7 +43,7 @@ class configuration:
         self.batch_size = 500
         self.min_delta = 0.0001
         self.patience = 20
-        self.padding = 2
+        self.padding = "valid"
         self.kernel_initializer = 'uniform'
         self.activation= 'relu'
         self.dilation_rate = 2
