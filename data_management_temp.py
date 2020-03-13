@@ -46,8 +46,7 @@ def slice_data(indexes, features, ground_truth, datasplit, past_history, config:
     ft, sssw, gran = config.future_target, config.step_size_sliding_window, config.granularity
 
     dataset = features.values
-    observations = len(dataset)
-    x = lambda a: int(observations * a)
+    x = lambda a: int(len(dataset) * a)
     train_start_num, val_start_num, test_start_num = x(train_start), x(val_start), x(test_start)
 
     x_train, y_train = multivariate_data(dataset, ground_truth.values, train_start_num, val_start_num, past_history, ft, sssw, gran)
@@ -60,9 +59,9 @@ def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_i
                       target_size, step, granularity):
     data, labels = [], []
     start_index = start_index + history_size 
-    if end_index is None:
-        end_index = len(dataset_features) - target_size - 1 # TODO: DOES THIS -1 MAKE SENSE?
-    for i in range(start_index, end_index): # start 100, end 790. 
+    if end_index is None: 
+        end_index = len(dataset_features)
+    for i in range(start_index, end_index - target_size): # start 100, end 790. 
         indices = range(i-history_size, i, step) # range(0, 100) step size of 1          --- our sliding window
         data.append(dataset_features[indices]) # append new array that contains all values within our sliding window
         labels.append(dataset_ground_truth[i+target_size])

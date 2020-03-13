@@ -1,4 +1,4 @@
-from hyperopt import hp, STATUS_OK
+from hyperopt import hp
 
 class hyperparameter_list:
     def __init__(self):
@@ -12,7 +12,6 @@ class hyperparameter_list:
         self.ref_point1 = "ref_point1"
         self.ref_point2 = "ref_point2"
         self.use_dilation = "use_dilation"
-        self.dilation_rate = "dilation_rate"
         self.layer_amount = "layer_amount"
 
     #@staticmethod
@@ -47,7 +46,7 @@ class configuration:
         self.padding = 2
         self.kernel_initializer = 'uniform'
         self.activation= 'relu'
-        self.dialation_rate = 2
+        self.dilation_rate = 2
         self.ada_datasplit = (0, 0.8, 0.9)
         self.cnn_datasplit = (0, 0.9, 1)
         self.cnn_testsplit = (0, 0, 0)
