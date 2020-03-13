@@ -76,10 +76,7 @@ def subtract_refvalue(obs, ref_value):
     return [val - ref_value for val in obs]
 
 def load_dataset(sheet_path, sheet_title, granularity):
-    # Read sheet 1 (table of contents), find index of entry with correct title, then load the corresponding excel sheet
-    table_of_contents = pd.read_excel(sheet_path, sheet_name=0, header=None)
-    sheet_index = table_of_contents[table_of_contents[0] == f"{sheet_title}_raw_data"][0].index[0]
-    sheet_data = pd.read_excel(sheet_path, sheet_name=sheet_index + 1, header=None)
+    sheet_data = pd.read_csv(f"{sheet_path}_{sheet_title}_raw_data.csv")
     sheet_data.columns = columns_data
     return sheet_data
 

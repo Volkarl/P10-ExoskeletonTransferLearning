@@ -18,10 +18,10 @@ class hyperparameter_list:
     def space(self):
         return {
 
-            self.past_history: 1 + hp.randint(self.past_history, 300),
+            self.kernel_size: 2 + hp.randint(self.kernel_size, 20),
+            self.past_history: 22 + hp.randint(self.past_history, 300), # Must be larger than kernel size
             self.smoothing: hp.choice(self.smoothing, [1, 25, 50, 75, 100]),
             self.shuffle_buffer_size: 1 + hp.randint(self.shuffle_buffer_size, 100),
-            self.kernel_size: 2 + hp.randint(self.kernel_size, 100),
             self.filters: 1 + hp.randint(self.filters, 100),
             self.optimizer: hp.choice(self.optimizer, ["adadelta", "adam", "rmsprop"]),
             self.use_ref_points: hp.choice(self.use_ref_points, [True, False]),
@@ -33,7 +33,7 @@ class hyperparameter_list:
 
 class configuration:
     def __init__(self): 
-        self.dataset_file_paths = ["Datasets\\SingleSessionData.xlsx","Datasets\\SingleSessionData.xlsx","Datasets\\SingleSessionData.xlsx","Datasets\\SingleSessionData.xlsx", "Datasets\\SingleSessionData.xlsx","Datasets\\SessionToSessionOne.xlsx","Datasets\\SessionToSessionOne.xlsx","Datasets\\SessionToSessionOne.xlsx","Datasets\\SessionToSessionOne.xlsx","Datasets\\SessionToSessionTwo.xlsx","Datasets\\SessionToSessionTwo.xlsx","Datasets\\SessionToSessionTwo.xlsx","Datasets\\SessionToSessionTwo.xlsx","Datasets\\SessionToSessionThree.xlsx","Datasets\\SessionToSessionThree.xlsx","Datasets\\SessionToSessionThree.xlsx","Datasets\\SessionToSessionThree.xlsx","Datasets\\SessionToSessionFour.xlsx","Datasets\\SessionToSessionFour.xlsx","Datasets\\SessionToSessionFour.xlsx","Datasets\\SessionToSessionFour.xlsx"]
+        self.dataset_file_paths = ["Datasets\\SingleSessionData","Datasets\\SingleSessionData","Datasets\\SingleSessionData","Datasets\\SingleSessionData", "Datasets\\SingleSessionData","Datasets\\SessionToSessionOne","Datasets\\SessionToSessionOne","Datasets\\SessionToSessionOne","Datasets\\SessionToSessionOne","Datasets\\SessionToSessionTwo","Datasets\\SessionToSessionTwo","Datasets\\SessionToSessionTwo","Datasets\\SessionToSessionTwo","Datasets\\SessionToSessionThree","Datasets\\SessionToSessionThree","Datasets\\SessionToSessionThree","Datasets\\SessionToSessionThree","Datasets\\SessionToSessionFour","Datasets\\SessionToSessionFour","Datasets\\SessionToSessionFour","Datasets\\SessionToSessionFour"]
         self.dataset_sheet_titles = ["data_Uniform","data_NonUniform","data_NonUniformWithPause","data_NonUniformTwo", "data_UniformWithPause","data_Uniform","data_NonUniform","data_NonUniformWithPause","data_UniformWithPause","data_Uniform","data_UniformTwo","data_NonUniform","data_NonUniformTwo","data_Uniform","data_UniformTwo","data_NonUniform","data_NonUniformTwo","data_NonUniform","data_NonUniformTwo","data_Uniform","data_UniformTwo"]
         self.attempt_name = "attempt_name"
         self.granularity = 1
