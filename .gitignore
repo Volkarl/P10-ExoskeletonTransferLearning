@@ -124,3 +124,5 @@ dmypy.json
 .pyre/
 
 .vscode/settings.json
+
+p10.code-workspace
