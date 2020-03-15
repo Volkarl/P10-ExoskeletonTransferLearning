@@ -24,18 +24,29 @@ def compile_model_cnn(data_shape, config: configuration, hyplist: hyperparameter
     model.summary()
     return model
 
-def fit_model_cnn(model, batched_train_data, batched_val_data, train_slices, val_slices, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+def fit_model_cnn(model, batched_train_data, batched_val_data, train_slices, val_slices, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, STUFF):
     train_batches = train_slices // config.batch_size
     val_batches = val_slices // config.batch_size
     # Splits the dataset into batches of this size: we perform gradiant descent once per batch
     es = tf.keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=config.min_delta, patience=config.patience, verbose=1, mode='min', baseline=None, restore_best_weights=True)
     
     start = timer()
-    training_history = model.fit(batched_train_data, epochs=config.epochs, 
-                                 steps_per_epoch=train_batches,
-                                 validation_data=batched_val_data,
+    training_history = model.fit(#batched_train_data, 
+                                 STUFF[0], STUFF[1],
+                                 epochs=config.epochs, 
+                                 steps_per_epoch=train_batches, #TODO: THIS IS CLEARLY NOT THE PROBLEM BECAUSE BUG PERSISTS. 
+                                 # TODO: TRY NOT BATCHING MY DATASET, AND PASSING A BATCH SIZE INSTEAD?
+                                 #validation_data=batched_val_data,
+                                 validation_data=(STUFF[2], STUFF[3]),
                                  validation_steps=val_batches,
+                                 batch_size=config.batch_size, #TODO
                                  callbacks=[es])
+
+    #TODO: You know what, maybe just try making it a generator function anyhow if nothing else works? Meh that's another larger refactor.
+
+    # TODO: STOP EN HALV. Vi fejler når den kalder model.validate, men hvorfor gør den først det EFTER den har været gennem alle 
+    # epochs af træningsdata?? Eller er det kun ved den femte at den fucker? Den kan jo tydeligvis regne alle fem val losses ud.
+
     end = timer()
     return training_history, end - start # time in seconds
 

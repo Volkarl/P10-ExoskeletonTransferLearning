@@ -38,11 +38,11 @@ class configuration:
         self.granularity = 1
         self.step_size_sliding_window = 1
         self.future_target = 1
-        self.epochs = 5
+        self.epochs = 5 #TODO: Increase this by a bit, otherwise what's the point of early stopping
         self.batch_size = 500
         self.min_delta = 0.0001
         self.patience = 20
-        self.padding = "valid"
+        self.padding = "valid" # TODO: Probably use same padding, just to avoid those errors? Now that we know why it can sometimes fail, it seems fine to hide the errors with same padding.
         self.kernel_initializer = 'uniform'
         self.activation= 'relu'
         self.dilation_rate = 2

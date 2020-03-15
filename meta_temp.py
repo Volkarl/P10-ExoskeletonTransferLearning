@@ -17,6 +17,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
                  "training_time": training_time,
                  "status": STATUS_OK }
     except Exception as e:
+        raise e
         return { "status": STATUS_FAIL,
                  "exception": str(e) }
 
@@ -27,13 +28,13 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
 
     # TODO: Remove train and validation slices. Make some kind of object to contain batched data and its information
     # Or maybe just figure out how to get data out of my batched objects, but I'm not sure if this even works
-    _, _, _, shape, _, _ = data.process_sheet(config.dataset_file_paths[0], config.dataset_sheet_titles[0], config.cnn_datasplit, config, hyplist, hyperparameter_dict)
+    _, _, _, shape, _, _, _ = data.process_sheet(config.dataset_file_paths[0], config.dataset_sheet_titles[0], config.cnn_datasplit, config, hyplist, hyperparameter_dict)
     model = cnn.compile_model_cnn(shape, config, hyplist, hyperparameter_dict)
     for path, sheet in zip(config.dataset_file_paths[:-1], config.dataset_sheet_titles[:-1]): # All sheets except the last
-        train, val, _, _, train_slices, val_slices = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
-        history, training_time = cnn.fit_model_cnn(model, train, val, train_slices, val_slices, config, hyplist, hyperparameter_dict)
+        train, val, _, _, train_slices, val_slices, STUFF = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
+        history, training_time = cnn.fit_model_cnn(model, train, val, train_slices, val_slices, config, hyplist, hyperparameter_dict, STUFF)
         model.fit(train, val, shape)
-    _, _, test, _, _, _ = data.process_sheet(config.dataset_file_paths[-1], config.dataset_sheet_titles[-1], config.cnn_testsplit, config, hyplist, hyperparameter_dict)
+    _, _, test, _, _, _, STUFF = data.process_sheet(config.dataset_file_paths[-1], config.dataset_sheet_titles[-1], config.cnn_testsplit, config, hyplist, hyperparameter_dict)
     loss = eva.evaluate_model(model, test) # make into a evaluation function that does stuff like save execution time in a file!
 
     return loss, training_time

@@ -20,7 +20,30 @@ def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyp
     datashape = x_train.shape[-2:]
     batch_train, batch_val, batch_test = batch_data(x_train, y_train, x_val, y_val, x_test, y_test, config.batch_size, 
                                                     config.epochs, hyperparameter_dict[hyplist.shuffle_buffer_size])
-    return batch_train, batch_val, batch_test, datashape, len(x_train), len(x_val)
+    return batch_train, batch_val, batch_test, datashape, len(x_train), len(x_val), (x_train, y_train, x_val, y_val, x_test, y_test)
+
+
+# MAKE ONE SEQUENCE PER SHEET
+
+class MySequence(tf.keras.utils.Sequence):
+    def __init__(self, path, title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+        self.batch_size = config.batch_size
+        raw_data = load_dataset(path, title, config.granularity)
+        indexes, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict[hyplist.smoothing])
+        if(hyperparameter_dict[hyplist.use_ref_points]): 
+            features = calc_ref_features(features, hyperparameter_dict[hyplist.ref_point1], hyperparameter_dict[hyplist.ref_point2])
+        self.x_train, self.y_train, self.x_val, self.y_val, self.x_test, self.y_test = slice_data(indexes, features, ground_truth, datasplit, hyperparameter_dict[hyplist.past_history], config)
+        self.datashape = #STUFF
+
+    def __len__(self):
+        return len(self.x_train)
+        # return int(np.floor(len(self.list_IDs) / self.batch_size))
+        # do stuff like this
+
+    def __getitem__(self, idx):
+        batch_x = self.x_train[idx * self.batch_size : (idx + 1) * self.batch_size]
+        batch_y = self.y_train[idx * self.batch_size : (idx + 1) * self.batch_size]
+        return (batch_x, batch_y)
 
 
 def batch_data(x_train, y_train, x_val, y_val, x_test, y_test, batch_size, epochs, shuffle_buffer_size):
