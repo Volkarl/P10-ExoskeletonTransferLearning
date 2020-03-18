@@ -24,7 +24,7 @@ def perform_hyperopt(objective, space, max_evals):
         space=space,
         algo=tpe.suggest,
         trials=trials,
-        max_evals=10)
+        max_evals=2)
 
     # The trials database now contains 100 entries, it can be saved/reloaded with pickle or another method
     pickle.dump(trials, open("trials.p", "wb"))
@@ -32,10 +32,10 @@ def perform_hyperopt(objective, space, max_evals):
 
     # Perform an additional 100 evaluations
     # Note that max_evals is set to 200 because 100 entries already exist in the database
-    best = fmin(objective,
-        space=space,
-        algo=tpe.suggest,
-        trials=trials,
-        max_evals=20)
+    #best = fmin(objective,
+    #    space=space,
+    #    algo=tpe.suggest,
+    #    trials=trials,
+    #    max_evals=20)
 
     print(best)

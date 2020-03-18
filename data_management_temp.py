@@ -29,8 +29,8 @@ def batch_data(x_train, y_train, x_val, y_val, x_test, y_test, batch_size, epoch
         batched_train_data = batched_train_data.shuffle(shuffle_buffer_size)
     batched_train_data = batched_train_data.batch(batch_size).repeat(epochs)
 
-    batched_val_data = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(batch_size).repeat(epochs)
-    batched_test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(1) # batch size of 1, no repeat
+    batched_val_data = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(batch_size)#.repeat(epochs)
+    batched_test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(batch_size)
     return batched_train_data, batched_val_data, batched_test_data
 
 

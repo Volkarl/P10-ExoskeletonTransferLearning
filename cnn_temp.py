@@ -9,10 +9,6 @@ def compile_model_cnn(data_shape, config: configuration, hyplist: hyperparameter
     ks = hyperparameter_dict[hyplist.kernel_size].item() # This is required because my searchspace doesn't pass proper, native int values, for god knows what reason
 
     model.add(tf.keras.layers.InputLayer(input_shape=data_shape))
-
-    #if(hyperparameter_dict[hyplist.use_dilation]): model.add(tf.keras.layers.Conv1D(input_shape=data_shape, filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation, dilation_rate=i**config.dilation_rate))
-    #else: model.add(tf.keras.layers.Conv1D(input_shape=data_shape, filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation))
-
     for i in range(hyperparameter_dict[hyplist.layer_amount]):
         if(hyperparameter_dict[hyplist.use_dilation]):
             model.add(tf.keras.layers.Conv1D(filters=hyperparameter_dict[hyplist.filters], kernel_size=ks, padding=config.padding, kernel_initializer=config.kernel_initializer, activation=config.activation, dilation_rate=config.dilation_rate**i))

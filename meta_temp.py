@@ -13,6 +13,7 @@ import evaluation_component as eva
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
         loss, training_time = run_all(config, hyplist, hyperparameter_dict)
+        print(loss, training_time, "PENIS")
         return { "loss": loss, 
                  "training_time": training_time,
                  "status": STATUS_OK }
@@ -29,12 +30,19 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     # Or maybe just figure out how to get data out of my batched objects, but I'm not sure if this even works
     _, _, _, shape, _, _ = data.process_sheet(config.dataset_file_paths[0], config.dataset_sheet_titles[0], config.cnn_datasplit, config, hyplist, hyperparameter_dict)
     model = cnn.compile_model_cnn(shape, config, hyplist, hyperparameter_dict)
-    for path, sheet in zip(config.dataset_file_paths[:-1], config.dataset_sheet_titles[:-1]): # All sheets except the last
+    
+    i = 0
+    skip_datasets = 15 # should be 1 normally
+    for path, sheet in zip(config.dataset_file_paths[:-skip_datasets], config.dataset_sheet_titles[:-1]): # All sheets except the last
+        print(f"DATASET {i} of {len(config.dataset_file_paths)}")
+        i = i+1
         train, val, _, _, train_slices, val_slices = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
         history, training_time = cnn.fit_model_cnn(model, train, val, train_slices, val_slices, config, hyplist, hyperparameter_dict)
-        model.fit(train, val, shape)
     _, _, test, _, _, _ = data.process_sheet(config.dataset_file_paths[-1], config.dataset_sheet_titles[-1], config.cnn_testsplit, config, hyplist, hyperparameter_dict)
-    loss = eva.evaluate_model(model, test) # make into a evaluation function that does stuff like save execution time in a file!
+    (loss, mae, mape, mse) = eva.evaluate_model(model, test) # make into a evaluation function that does stuff like save execution time in a file!
+
+    # TODO REMOVE THE MODEL FROM MEMORY WHEN IM DONE USING IT
+
 
     return loss, training_time
     # TODO: At some point put this into a CNN-only function.

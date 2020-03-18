@@ -35,13 +35,13 @@ class configuration:
         self.dataset_file_paths = ["Datasets\\SingleSessionData","Datasets\\SingleSessionData","Datasets\\SingleSessionData","Datasets\\SingleSessionData", "Datasets\\SingleSessionData","Datasets\\SessionToSessionOne","Datasets\\SessionToSessionOne","Datasets\\SessionToSessionOne","Datasets\\SessionToSessionOne","Datasets\\SessionToSessionTwo","Datasets\\SessionToSessionTwo","Datasets\\SessionToSessionTwo","Datasets\\SessionToSessionTwo","Datasets\\SessionToSessionThree","Datasets\\SessionToSessionThree","Datasets\\SessionToSessionThree","Datasets\\SessionToSessionThree","Datasets\\SessionToSessionFour","Datasets\\SessionToSessionFour","Datasets\\SessionToSessionFour","Datasets\\SessionToSessionFour"]
         self.dataset_sheet_titles = ["data_Uniform","data_NonUniform","data_NonUniformWithPause","data_NonUniformTwo", "data_UniformWithPause","data_Uniform","data_NonUniform","data_NonUniformWithPause","data_UniformWithPause","data_Uniform","data_UniformTwo","data_NonUniform","data_NonUniformTwo","data_Uniform","data_UniformTwo","data_NonUniform","data_NonUniformTwo","data_NonUniform","data_NonUniformTwo","data_Uniform","data_UniformTwo"]
         self.attempt_name = "attempt_name"
-        self.granularity = 1
+        self.granularity = 3
         self.step_size_sliding_window = 1
         self.future_target = 1
-        self.epochs = 5
+        self.epochs = 20
         self.batch_size = 500
         self.min_delta = 0.0001
-        self.patience = 20
+        self.patience = 10
         self.padding = "valid"
         self.kernel_initializer = 'uniform'
         self.activation= 'relu'
