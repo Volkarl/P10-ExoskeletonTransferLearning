@@ -13,7 +13,6 @@ import evaluation_component as eva
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
         loss, training_time = run_all(config, hyplist, hyperparameter_dict)
-        print(loss, training_time, "PENIS")
         return { "loss": loss, 
                  "training_time": training_time,
                  "status": STATUS_OK }
@@ -37,9 +36,9 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
         print(f"DATASET {i} of {len(config.dataset_file_paths)}")
         i = i+1
         train, val, _, _, train_slices, val_slices = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
-        history, training_time = cnn.fit_model_cnn(model, train, val, train_slices, val_slices, config, hyplist, hyperparameter_dict)
+        training_time = cnn.fit_model_cnn(model, train, val, train_slices, val_slices, config, hyplist, hyperparameter_dict)
     _, _, test, _, _, _ = data.process_sheet(config.dataset_file_paths[-1], config.dataset_sheet_titles[-1], config.cnn_testsplit, config, hyplist, hyperparameter_dict)
-    (loss, mae, mape, mse) = eva.evaluate_model(model, test) # make into a evaluation function that does stuff like save execution time in a file!
+    (loss) = eva.evaluate_model(model, test) # make into a evaluation function that does stuff like save execution time in a file!
 
     # TODO REMOVE THE MODEL FROM MEMORY WHEN IM DONE USING IT
 

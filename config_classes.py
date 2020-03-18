@@ -17,7 +17,7 @@ class hyperparameter_list:
     #@staticmethod
     def space(self):
         return {
-            self.kernel_size: 2 + hp.randint(self.kernel_size, 4), # This needs to be a small value, otherwise it will cause dimensionality errors unless past_history divided by layer size is sufficiently large
+            self.kernel_size: hp.choice(self.kernel_size, [2, 3, 4]), # This needs to be a small value, otherwise it will cause dimensionality errors unless past_history divided by layer size is sufficiently large
             self.past_history: 22 + hp.randint(self.past_history, 300), # Must be larger than kernel size
             self.smoothing: hp.choice(self.smoothing, [1, 25, 50, 75, 100]),
             self.shuffle_buffer_size: 1 + hp.randint(self.shuffle_buffer_size, 100),
@@ -38,7 +38,7 @@ class configuration:
         self.granularity = 3
         self.step_size_sliding_window = 1
         self.future_target = 1
-        self.epochs = 20
+        self.epochs = 10
         self.batch_size = 500
         self.min_delta = 0.0001
         self.patience = 10

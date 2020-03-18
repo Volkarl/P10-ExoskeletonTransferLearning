@@ -19,23 +19,17 @@ def perform_hyperopt(objective, space, max_evals):
 
     # TODO: I already have a max_evals value. Maybe split it up and perform pickling inbetween?
 
-    # Perform 100 evaluations on the search space
-    best = fmin(objective,
-        space=space,
-        algo=tpe.suggest,
-        trials=trials,
-        max_evals=2)
+    total_evals = 20
+    steps_before_saving = 2
+    for i in range(0, total_evals, steps_before_saving):
+        best = fmin(objective,
+               space=space,
+               algo=tpe.suggest,
+               trials=trials,
+               max_evals=i + steps_before_saving)
+               # Runs STEPS each time it runs, saves all results, then it runs STEPS more attempts
 
-    # The trials database now contains 100 entries, it can be saved/reloaded with pickle or another method
-    pickle.dump(trials, open("trials.p", "wb"))
-    trials = pickle.load(open("trials.p", "rb"))
-
-    # Perform an additional 100 evaluations
-    # Note that max_evals is set to 200 because 100 entries already exist in the database
-    #best = fmin(objective,
-    #    space=space,
-    #    algo=tpe.suggest,
-    #    trials=trials,
-    #    max_evals=20)
+        pickle.dump(trials, open("trials.p", "wb"))
+        trials = pickle.load(open("trials.p", "rb"))
 
     print(best)
