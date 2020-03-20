@@ -13,21 +13,28 @@ class hyperparameter_list:
         self.ref_point2 = "ref_point2"
         self.use_dilation = "use_dilation"
         self.layer_amount = "layer_amount"
+        self.dilation_group = "dilation_group"
 
     #@staticmethod
     def space(self):
         return {
             self.kernel_size: hp.choice(self.kernel_size, [2, 3, 4]), # This needs to be a small value, otherwise it will cause dimensionality errors unless past_history divided by layer size is sufficiently large
-            self.past_history: 22 + hp.randint(self.past_history, 300), # Must be larger than kernel size
             self.smoothing: hp.choice(self.smoothing, [1, 25, 50, 75, 100]),
             self.shuffle_buffer_size: 1 + hp.randint(self.shuffle_buffer_size, 100),
             self.filters: 1 + hp.randint(self.filters, 100),
             self.optimizer: hp.choice(self.optimizer, ["adadelta", "adam", "rmsprop"]),
-            self.use_ref_points: hp.choice(self.use_ref_points, [True, False]),
+            self.use_ref_points: hp.choice(self.use_ref_points, [False, True]),
             self.ref_point1: hp.choice(self.ref_point1, [0, 1, 2, 3]),
             self.ref_point2: hp.choice(self.ref_point2, [4, 5, 6, 7]),
-            self.use_dilation: hp.choice(self.use_dilation, [True, False]),
-            self.layer_amount: 1 + hp.randint(self.layer_amount, 8) # Values distributed in interval: (0, 8]
+            self.dilation_group: hp.choice(self.dilation_group, [{ 
+                    self.use_dilation: False,
+                    self.layer_amount: 1 + hp.randint("dilation_layer_false", 8),
+                    self.past_history: 20 + hp.randint("dilation_past_false", 280)  
+                },{
+                    self.use_dilation: True, # We use dilation: therefore require a high pasthistory and low layeramount
+                    self.layer_amount: 1 + hp.randint("dilation_layer_true", 4),
+                    self.past_history: 150 + hp.randint("dilation_past_true", 150)
+                }])
         }
 
 class configuration:

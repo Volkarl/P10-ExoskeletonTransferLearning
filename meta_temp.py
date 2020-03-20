@@ -6,9 +6,8 @@ from functools import partial
 
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
-import data_management_temp as data
-import cnn_temp as cnn
-import evaluation_component as eva
+import data_manager_component as data
+import cnn_component as cnn
 
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
@@ -30,15 +29,17 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     _, _, _, shape, _, _ = data.process_sheet(config.dataset_file_paths[0], config.dataset_sheet_titles[0], config.cnn_datasplit, config, hyplist, hyperparameter_dict)
     model = cnn.compile_model_cnn(shape, config, hyplist, hyperparameter_dict)
     
-    i = 0
-    skip_datasets = 15 # should be 1 normally
+    i, training_time = 0, 0
+    skip_datasets = 16 # should be 1 normally
+    
     for path, sheet in zip(config.dataset_file_paths[:-skip_datasets], config.dataset_sheet_titles[:-1]): # All sheets except the last
         print(f"DATASET {i} of {len(config.dataset_file_paths)}")
-        i = i+1
+        i = i + 1
         train, val, _, _, train_slices, val_slices = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
-        training_time = cnn.fit_model_cnn(model, train, val, train_slices, val_slices, config, hyplist, hyperparameter_dict)
+        if(i == 0): training_time = cnn.fit_model_cnn(model, train, val, train_slices, val_slices, True, config, hyplist, hyperparameter_dict)
+        else: _ = cnn.fit_model_cnn(model, train, val, train_slices, val_slices, False, config, hyplist, hyperparameter_dict)
     _, _, test, _, _, _ = data.process_sheet(config.dataset_file_paths[-1], config.dataset_sheet_titles[-1], config.cnn_testsplit, config, hyplist, hyperparameter_dict)
-    (loss) = eva.evaluate_model(model, test) # make into a evaluation function that does stuff like save execution time in a file!
+    (loss) = cnn.evaluate_model_cnn(model, test) # make into a evaluation function that does stuff like save execution time in a file!
 
     # TODO REMOVE THE MODEL FROM MEMORY WHEN IM DONE USING IT
 
