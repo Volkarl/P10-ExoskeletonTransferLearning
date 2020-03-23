@@ -3,6 +3,8 @@ import tensorflow as tf
 print(tf.test.is_gpu_available())
 from hyperopt import STATUS_OK, STATUS_FAIL
 from functools import partial
+from os import chdir
+from os.path import exists
 
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
@@ -16,12 +18,17 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
                  "training_time": training_time,
                  "status": STATUS_OK }
     except Exception as e:
+        print(str(e))
         return { "status": STATUS_FAIL,
                  "exception": str(e) }
 
 def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     # Config_dict is set by this file. Specific hyperparams are given by hyperopt
     # Access individual hyperparams by using hyperparameters[hyplist.HYPERPARAM_NAME]
+
+
+    gitdir = "P10-ExoskeletonTransferLearning"
+    if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
 
 
     # TODO: Remove train and validation slices. Make some kind of object to contain batched data and its information
@@ -31,7 +38,7 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     
     i, training_time = 0, 0
     skip_datasets = 16 # should be 1 normally
-    
+
     for path, sheet in zip(config.dataset_file_paths[:-skip_datasets], config.dataset_sheet_titles[:-1]): # All sheets except the last
         print(f"DATASET {i} of {len(config.dataset_file_paths)}")
         i = i + 1
