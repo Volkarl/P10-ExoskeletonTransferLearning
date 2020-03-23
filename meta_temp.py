@@ -39,7 +39,7 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     i, training_time = 0, 0
     skip_datasets = 1 # should be 1 normally
 
-    for path, sheet in zip(config.dataset_file_paths[:-skip_datasets], config.dataset_sheet_titles[:-1]): # All sheets except the last
+    for path, sheet in zip(config.dataset_file_paths[:-skip_datasets], config.dataset_sheet_titles[:-skip_datasets]): # All sheets except the last
         print(f"DATASET {i} of {len(config.dataset_file_paths)}")
         i = i + 1
         train, val, _, _, train_slices, val_slices = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
