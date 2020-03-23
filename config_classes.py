@@ -25,14 +25,14 @@ class hyperparameter_list:
             self.optimizer: hp.choice(self.optimizer, ["adadelta", "adam", "rmsprop"]),
             self.use_ref_points: hp.choice(self.use_ref_points, [False, True]),
             self.ref_point1: hp.choice(self.ref_point1, [0, 1, 2, 3]),
-            self.ref_point2: hp.choice(self.ref_point2, [4, 5, 6, 7]),
+            self.ref_point2: hp.choice(self.ref_point2, [4, 5, 6, 7]), # TODO: Make ref points a choice as well
             self.dilation_group: hp.choice(self.dilation_group, [{ 
                     self.use_dilation: False,
-                    self.layer_amount: 1 + hp.randint("dilation_layer_false", 8),
+                    self.layer_amount: 1 + hp.randint("dilation_layer_false", 9),
                     self.past_history: 20 + hp.randint("dilation_past_false", 280)  
                 },{
                     self.use_dilation: True, # We use dilation: therefore require a high pasthistory and low layeramount
-                    self.layer_amount: 1 + hp.randint("dilation_layer_true", 4),
+                    self.layer_amount: 2 + hp.randint("dilation_layer_true", 4),
                     self.past_history: 150 + hp.randint("dilation_past_true", 150)
                 }])
         }

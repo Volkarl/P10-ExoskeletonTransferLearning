@@ -15,7 +15,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         loss, training_time = run_all(config, hyplist, hyperparameter_dict)
         return { "loss": loss, 
-                 "training_time": training_time,
+                 "training_time": training_time, # TODO Training time doesn't seem to work atm
                  "status": STATUS_OK }
     except Exception as e:
         print(str(e))
@@ -48,8 +48,7 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     _, _, test, _, _, _ = data.process_sheet(config.dataset_file_paths[-1], config.dataset_sheet_titles[-1], config.cnn_testsplit, config, hyplist, hyperparameter_dict)
     (loss) = cnn.evaluate_model_cnn(model, test) # make into a evaluation function that does stuff like save execution time in a file!
 
-    # TODO REMOVE THE MODEL FROM MEMORY WHEN IM DONE USING IT
-
+    del model # Remove all references from the model, such that the garbage collector claims it
 
     return loss, training_time
     # TODO: At some point put this into a CNN-only function.
