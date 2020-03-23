@@ -37,7 +37,7 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     model = cnn.compile_model_cnn(shape, config, hyplist, hyperparameter_dict)
     
     i, training_time = 0, 0
-    skip_datasets = 16 # should be 1 normally
+    skip_datasets = 1 # should be 1 normally
 
     for path, sheet in zip(config.dataset_file_paths[:-skip_datasets], config.dataset_sheet_titles[:-1]): # All sheets except the last
         print(f"DATASET {i} of {len(config.dataset_file_paths)}")
