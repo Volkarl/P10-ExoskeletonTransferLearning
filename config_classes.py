@@ -29,7 +29,8 @@ class hyperparameter_list:
             self.dilation_group: hp.choice(self.dilation_group, [{ 
                     self.use_dilation: False,
                     self.layer_amount: 1 + hp.randint("dilation_layer_false", 9),
-                    self.past_history: 20 + hp.randint("dilation_past_false", 280)  
+                    self.past_history: 20 + hp.randint("dilation_past_false", 280)
+                    # TODO: Add kernel size here as well
                 },{
                     self.use_dilation: True, # We use dilation: therefore require a high pasthistory and low layeramount
                     self.layer_amount: 2 + hp.randint("dilation_layer_true", 4),

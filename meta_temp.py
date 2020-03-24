@@ -5,6 +5,7 @@ from hyperopt import STATUS_OK, STATUS_FAIL
 from functools import partial
 from os import chdir
 from os.path import exists
+from tensorflow.keras.backend import clear_session
 
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
@@ -48,7 +49,10 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     _, _, test, _, _, _ = data.process_sheet(config.dataset_file_paths[-1], config.dataset_sheet_titles[-1], config.cnn_testsplit, config, hyplist, hyperparameter_dict)
     (loss) = cnn.evaluate_model_cnn(model, test) # make into a evaluation function that does stuff like save execution time in a file!
 
+    # Cleanup
     del model # Remove all references from the model, such that the garbage collector claims it
+    clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
+    # TODO: Maybe gc.collect as well?
 
     return loss, training_time
     # TODO: At some point put this into a CNN-only function.
