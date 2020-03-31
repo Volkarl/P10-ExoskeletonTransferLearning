@@ -8,6 +8,8 @@ def compile_model_cnn(data_shape, config: configuration, hyplist: hyperparameter
     model = tf.keras.models.Sequential()
     ks = hyperparameter_dict[hyplist.kernel_size] # This is required because my searchspace doesn't pass proper, native int values, for god knows what reason
 
+    # TODO Maybe try adding a max-pooling layer for dimensionality reduction (noise) and instead of granularity for downsampling
+
     model.add(tf.keras.layers.InputLayer(input_shape=data_shape))
     for i in range(hyperparameter_dict[hyplist.dilation_group][hyplist.layer_amount]):
         if(hyperparameter_dict[hyplist.dilation_group][hyplist.use_dilation]):
