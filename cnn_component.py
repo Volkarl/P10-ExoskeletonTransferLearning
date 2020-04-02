@@ -45,3 +45,20 @@ def fit_model_cnn(model, batched_train_data, batched_val_data, train_slices, val
 
 def evaluate_model_cnn(trained_model, batched_test_data):
     return trained_model.evaluate(batched_test_data, verbose=2)
+
+
+
+
+class Model_CNN:
+    def __init__(self, datashape, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+        self._model = compile_model_cnn(datashape, config, hyplist, hyperparameter_dict)
+        self._config = config
+        self._hyplist = hyplist
+        self._hyperparameter_dict = hyperparameter_dict
+        self._train_time = 0
+
+    def fit(self, batched_train_data, batched_val_data, train_slices, val_slices, use_timer):
+        self._train_time = fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, use_timer, self._config, self._hyplist, self._hyperparameter_dict)
+
+    def evaluate(self, batched_test_data):
+        return evaluate_model_cnn(self._model, batched_test_data)

@@ -11,10 +11,12 @@ from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
 import data_manager_component as data
 import cnn_component as cnn
+from ensemble import Model_Ensemble_CNN
 
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
-        loss, training_time = run_all(config, hyplist, hyperparameter_dict)
+        loss, training_time = run_ensemble(config, hyplist, hyperparameter_dict)
+        #loss, training_time = run_all(config, hyplist, hyperparameter_dict)
         return { "loss": loss, 
                  "training_time": training_time, # TODO Training time doesn't seem to work atm
                  "status": STATUS_OK }
@@ -57,15 +59,34 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     return loss, training_time
     # TODO: At some point put this into a CNN-only function.
 
-
-    #if(use_cnn): cnn(config, hyplist, hyperparameter_dict)
-    #else: adaboost(config, hyplist, hyperparameter_dict)
-    # One sheet at a time!
-
     # There are two options: 
     # 1. Each person is split into train/val/test
     # 2. Each person is split into train/val, except the last people that are purely test
     # Make lambda function for this
+
+
+def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
+    gitdir = "P10-ExoskeletonTransferLearning"
+    if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
+    # TODO do the todos mentioned above
+
+    test_people_num = -1 # last person is test
+    train_iterable = zip(config.dataset_file_paths[:test_people_num], config.dataset_sheet_titles[:test_people_num])
+    test_iterable = zip(config.dataset_file_paths[test_people_num:], config.dataset_sheet_titles[test_people_num:])
+    train_people = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in train_iterable]
+    test_people = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in test_iterable]
+
+    model = Model_Ensemble_CNN(train_people, test_people, config, hyplist, hyperparameter_dict)
+    model.fit()
+    loss = model.evaluate()
+
+    training_time = -1
+
+    del model # Remove all references from the model, such that the garbage collector claims it
+    clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
+    return loss, training_time
+
+    # TODO: FIX FIRST MY NON-ENSEMBLE METHOD. THEN TRY ENSEMBLE AGAIN (but only have it work on five or so datasheets)
 
 
 #def adaboost_run():
@@ -77,7 +98,6 @@ def run_all(config: configuration, hyplist: hyperparameter_list, hyperparameter_
 #        return weaklearner
         # This might not make sense entirely with how you want to split up datasets for making individual weaklearners
 
-# def cnn_run(config: configuration, hyplist: hyperparameter_list, hyp_dict):
 
 
 

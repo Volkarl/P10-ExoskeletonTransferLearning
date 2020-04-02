@@ -38,6 +38,9 @@ class hyperparameter_list:
                 }])
         }
 
+# TODO: Add pooling layers
+
+
 class configuration:
     def __init__(self): 
         self.dataset_file_paths =   ["SingleSessionData",   "SingleSessionData",    "SingleSessionData",        "SingleSessionData",    "SingleSessionData",        "SessionToSessionOne",  "SessionToSessionOne",  "SessionToSessionOne",      "SessionToSessionOne",      "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour"]
