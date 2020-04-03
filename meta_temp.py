@@ -82,7 +82,7 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     model = Model_Ensemble_CNN(person.datashape, train_ppl_amount, config, hyplist, hyperparameter_dict)
 
     for idx, person in enumerate(train_people_files):
-        print(f"PERSON {idx} of {train_ppl_amount}")
+        print(f"PERSON {idx + 1} of {train_ppl_amount}")
         sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
         model.fit(False, idx, sessions) # TODO Make use of training time once
 

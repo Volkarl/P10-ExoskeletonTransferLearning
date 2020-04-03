@@ -12,7 +12,7 @@ class Model_Ensemble_CNN:
     def fit(self, use_timer, model_idx, train_person_sessions: [batched_data]):
         train_time_lst = []
         for s_idx, session in enumerate(train_person_sessions):
-            print(f"Training MODEL {model_idx} with SESSION {s_idx}")
+            print(f"Training MODEL {model_idx + 1} with SESSION {s_idx + 1}")
             self._models[model_idx].fit(session.train, session.val, session.train_slices, session.val_slices, use_timer)
             train_time_lst.append(self._models[model_idx].train_time)
         if use_timer: self.train_time = mean(train_time_lst)
@@ -22,4 +22,6 @@ class Model_Ensemble_CNN:
         for model in self._models:
             for session in test_person_sessions:
                 loss_lst.append(model.evaluate(session.test))
-        return mean(loss_lst)
+        loss = mean(loss_lst)
+        print("ENSEMBLE MODEL MEAN LOSS: " + loss)
+        return loss
