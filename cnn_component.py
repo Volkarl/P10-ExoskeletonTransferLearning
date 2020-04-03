@@ -55,10 +55,11 @@ class Model_CNN:
         self._config = config
         self._hyplist = hyplist
         self._hyperparameter_dict = hyperparameter_dict
-        self._train_time = 0
+        self.train_time = 0
 
     def fit(self, batched_train_data, batched_val_data, train_slices, val_slices, use_timer):
-        self._train_time = fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, use_timer, self._config, self._hyplist, self._hyperparameter_dict)
+        train_time = fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, use_timer, self._config, self._hyplist, self._hyperparameter_dict)
+        if(use_timer): self.train_time = train_time
 
     def evaluate(self, batched_test_data):
         return evaluate_model_cnn(self._model, batched_test_data)
