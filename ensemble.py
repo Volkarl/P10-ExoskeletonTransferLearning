@@ -23,5 +23,5 @@ class Model_Ensemble_CNN:
             for session in test_person_sessions:
                 loss_lst.append(model.evaluate(session.test))
         loss = mean(loss_lst)
-        print("ENSEMBLE MODEL MEAN LOSS: " + loss)
+        print(f"ENSEMBLE MODEL MEAN LOSS: {loss}")
         return loss
