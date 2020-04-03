@@ -4,22 +4,22 @@ from data_manager_component import batched_data
 from cnn_component import Model_CNN
 
 class Model_Ensemble_CNN:
-    def __init__(self, train_people: [batched_data], test_people: [batched_data], config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-        self._models = [Model_CNN(train_people[0].datashape, config, hyplist, hyperparameter_dict) for person in train_people]
+    def __init__(self, datashape, person_amount, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+        self._models = [Model_CNN(datashape, config, hyplist, hyperparameter_dict) for i in range(person_amount)]
         # It may be faster to perform deepcopy here ? !
-        self._config = config
-        self._hyplist = hyplist
-        self._hyperparameter_dict = hyperparameter_dict
-        self._train_people = train_people
-        self._test_people = test_people
+        self.train_time = 0
     
-    def fit(self):
-        for person, model in zip(self._train_people, self._models):
-            model.fit(person.train, person.val, person.train_slices, person.val_slices, False)
+    def fit(self, use_timer, model_idx, train_person_sessions: [batched_data]):
+        train_time_lst = []
+        for s_idx, session in enumerate(train_person_sessions):
+            print(f"Training MODEL {model_idx} with SESSION {s_idx}")
+            self._models[model_idx].fit(session.train, session.val, session.train_slices, session.val_slices, use_timer)
+            train_time_lst.append(self._models[model_idx].train_time)
+        if use_timer: self.train_time = mean(train_time_lst)
 
-    def evaluate(self):
-        lst = []
+    def evaluate(self, test_person_sessions: [batched_data]):
+        loss_lst = []
         for model in self._models:
-            for person in self._test_people:
-                lst.append(model.evaluate(person.test))
-        return mean(lst)
+            for session in test_person_sessions:
+                loss_lst.append(model.evaluate(session.test))
+        return mean(loss_lst)
