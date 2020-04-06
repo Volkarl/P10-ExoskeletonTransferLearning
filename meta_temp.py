@@ -16,19 +16,18 @@ from ensemble import Model_Ensemble_CNN
 
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
-        #loss, training_time = run_cnn(config, hyplist, hyperparameter_dict)
-        loss, training_time = run_ensemble(config, hyplist, hyperparameter_dict)
+        #loss = run_cnn(config, hyplist, hyperparameter_dict)
+        loss = run_ensemble(config, hyplist, hyperparameter_dict)
         return { "loss": loss, 
-                 "training_time": training_time, # TODO Training time doesn't seem to work atm
                  "status": STATUS_OK }
     except Exception as e:
         print(str(e))
         return { "status": STATUS_FAIL,
                  "exception": str(e) }
 
-def fit_cnn_with_person(idx, length, person, model, use_timer):
+def fit_cnn_with_person(idx, length, person, model):
     print(f"DATASET {idx} of {length}")
-    model.fit(person.train, person.val, person.train_slices, person.val_slices, use_timer)
+    model.fit(person.train, person.val, person.train_slices, person.val_slices)
 
 def run_cnn(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     # TODO Need to fix this one to work with multiple people with multiple sessions, such that I dont just assume that one person = 1 sheet
@@ -45,21 +44,26 @@ def run_cnn(config: configuration, hyplist: hyperparameter_list, hyperparameter_
     first_path, first_sheet = next(train_iterator)
     person = data.process_sheet(first_path, first_sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
     model = cnn.Model_CNN(person.datashape, config, hyplist, hyperparameter_dict)
-    fit_cnn_with_person(1, dataset_amount, person, model, True)
+    fit_cnn_with_person(1, dataset_amount, person, model)
 
     for idx, (path, sheet) in enumerate(train_iterator):
         person = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) # atm 1 person = 1 sheet. Will probably change to 1 p = 5 sheets
-        fit_cnn_with_person(idx + 1, dataset_amount, person, model, False)
+        fit_cnn_with_person(idx + 1, dataset_amount, person, model)
     
-    loss_lst, train_time = [], model.train_time
+    loss_lst = []
     for path, sheet in test_iterator:
         person = data.process_sheet(path, sheet, config.cnn_testsplit, config, hyplist, hyperparameter_dict) # atm 1 person = 1 sheet. Will probably change to 1 p = 5 sheets
         loss_lst.append(model.evaluate(person.test))
 
     del model # Remove all references from the model, such that the garbage collector claims it
     clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
-    return mean(loss_lst), train_time
+    return mean(loss_lst)
 
+def find_datashape(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    # We load the first sheet as a test-run to see which datashape it ends up with
+    first_path, first_sheet = config.dataset_file_paths[0], config.dataset_sheet_titles[0]
+    person = data.process_sheet(first_path, first_sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
+    return person.datashape
 
 def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     gitdir = "P10-ExoskeletonTransferLearning"
@@ -75,50 +79,35 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     train_people_files = [zip(config.dataset_file_paths[i:i+train_spp], config.dataset_sheet_titles[i:i+train_spp]) for i in range(0, train_sheets, train_spp)]
     test_people_files = [zip(config.dataset_file_paths[i:i+test_spp], config.dataset_sheet_titles[i:i+test_spp]) for i in range(train_sheets, train_sheets + test_sheets, test_spp)]
     # Note that this grabs the test sheets from right after our train sheets, not necessarily the last sheets
+    # TODO Maybe put these person-tuple-calculations into the configuration class
+    # TODO: GetPeopleIterator
 
-    # TEST RUN TO FIND DATASHAPE
-    first_path, first_sheet = config.dataset_file_paths[0], config.dataset_sheet_titles[0]
-    person = data.process_sheet(first_path, first_sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
-    model = Model_Ensemble_CNN(person.datashape, train_ppl_amount, config, hyplist, hyperparameter_dict)
+    model = Model_Ensemble_CNN(find_datashape(config, hyplist, hyperparameter_dict), train_ppl_amount, config, hyplist, hyperparameter_dict)
 
     for idx, person in enumerate(train_people_files):
         print(f"PERSON {idx + 1} of {train_ppl_amount}")
         sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
-        model.fit(False, idx, sessions) # TODO Make use of training time once
+        model.fit(idx, sessions)
 
-    loss, training_time = 0, -1 #NOTE FIX TRAINING TIME
-
+    loss = 0
     for idx, person in enumerate(test_people_files):
         sessions = [data.process_sheet(path, sheet, config.cnn_testsplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
         loss = model.evaluate(sessions)
 
     del model # Remove all references from the model, such that the garbage collector claims it
     clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
-    return loss, training_time
+    # TODO: For cleanup maybe gc.collect as well?
+    return loss
 
-
-# Config_dict is set by this file. Specific hyperparams are given by hyperopt
-# Access individual hyperparams by using hyperparameters[hyplist.HYPERPARAM_NAME]
-# TODO: Maybe gc.collect as well?
-
-# There are two options: 
-# 1. Each person is split into train/val/test
-# 2. Each person is split into train/val, except the last people that are purely test
-# Make lambda function for this
-
-#def adaboost_run():
-#    for sheet in sheets:
-#        train,val,test = processsheet(sheet, config.ada_datasplit)
-#        weaklearner = model.compile()
-#        weaklearner.fit(train, val)
-#        weaklearner.eval(test)
-#        return weaklearner
-        # This might not make sense entirely with how you want to split up datasets for making individual weaklearners
-
-
+do_param_optimization = False
 
 config = configuration()
 hyplist = hyperparameter_list()
-partial_objective = partial(objective, config, hyplist)
-# This is basically function currying. Defines our objective function with the config_dict parameter already present
-opt.perform_hyperopt(partial_objective, hyplist.space(), 100)
+
+if do_param_optimization: 
+    partial_objective = partial(objective, config, hyplist)
+    # This is basically function currying. Defines our objective function with the config_dict parameter already present
+    opt.perform_hyperopt(partial_objective, hyplist.space(), 100)
+
+else: 
+    objective(config, hyplist, hyplist.best_arguments())

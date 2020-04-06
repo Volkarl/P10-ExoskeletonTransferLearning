@@ -40,6 +40,22 @@ class hyperparameter_list:
 
 # TODO: Add pooling layers
 
+    def best_arguments(self): # This is just hard coded to whatever hyperopt found
+        return {
+            self.kernel_size: 2,
+            self.smoothing: 25,
+            self.shuffle_buffer_size: 1 + 17,
+            self.filters: 1 + 22,
+            self.optimizer: "adam",
+            self.use_ref_points: True,
+            self.ref_point1: 2,
+            self.ref_point2: 6,
+            self.dilation_group: {
+                self.use_dilation: True,
+                self.layer_amount: 2 + 4,
+                self.past_history: 150 + 141
+            }
+        }
 
 class configuration:
     def __init__(self): 

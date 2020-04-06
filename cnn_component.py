@@ -1,6 +1,5 @@
 from config_classes import hyperparameter_list, configuration
 import tensorflow as tf
-from timeit import default_timer as timer
 
 optimizer_dict = {'adadelta': tf.keras.optimizers.Adadelta(), 'adam': tf.keras.optimizers.Adam(), 'rmsprop': tf.keras.optimizers.RMSprop()}
 
@@ -22,25 +21,19 @@ def compile_model_cnn(data_shape, config: configuration, hyplist: hyperparameter
     model.summary()
     return model
 
-def fit_model_cnn(model, batched_train_data, batched_val_data, train_slices, val_slices, use_timer, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+def fit_model_cnn(model, batched_train_data, batched_val_data, train_slices, val_slices, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     train_batches = train_slices // config.batch_size
     val_batches = val_slices // config.batch_size
     # Splits the dataset into batches of this size: we perform gradiant descent once per batch
     #es = tf.keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=config.min_delta, patience=config.patience, verbose=1, mode='min', baseline=None, restore_best_weights=True)
     
-    start, end = 0, 0
-    if(use_timer): start = timer()
     model.fit(batched_train_data, epochs=config.epochs, 
               steps_per_epoch=train_batches,
               validation_data=batched_val_data,
               validation_steps=val_batches,
               #callbacks=[es],
               verbose=0)
-    if(use_timer): end = timer()
-    return end - start # time in seconds
-
-
-# TODO: ?? Use model.train's argument for class_weight and perhaps sample_weight
+              # TODO: ?? Use model.train's argument for class_weight and perhaps sample_weight
 
 
 def evaluate_model_cnn(trained_model, batched_test_data):
@@ -55,11 +48,9 @@ class Model_CNN:
         self._config = config
         self._hyplist = hyplist
         self._hyperparameter_dict = hyperparameter_dict
-        self.train_time = 0
 
-    def fit(self, batched_train_data, batched_val_data, train_slices, val_slices, use_timer):
-        train_time = fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, use_timer, self._config, self._hyplist, self._hyperparameter_dict)
-        if use_timer: self.train_time = train_time
+    def fit(self, batched_train_data, batched_val_data, train_slices, val_slices):
+        fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, self._config, self._hyplist, self._hyperparameter_dict)
 
     def evaluate(self, batched_test_data):
         return evaluate_model_cnn(self._model, batched_test_data)

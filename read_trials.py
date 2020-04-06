@@ -37,3 +37,5 @@ for item in myitems[:10]:
     print("--------------------------\n")
     print(item)
     print("\n\n")
+# TODO: Print training times as well... attemptid["book_time"]
+

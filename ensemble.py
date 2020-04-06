@@ -7,15 +7,11 @@ class Model_Ensemble_CNN:
     def __init__(self, datashape, person_amount, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
         self._models = [Model_CNN(datashape, config, hyplist, hyperparameter_dict) for i in range(person_amount)]
         # It may be faster to perform deepcopy here ? !
-        self.train_time = 0
     
-    def fit(self, use_timer, model_idx, train_person_sessions: [batched_data]):
-        train_time_lst = []
+    def fit(self, model_idx, train_person_sessions: [batched_data]):
         for s_idx, session in enumerate(train_person_sessions):
             print(f"Training MODEL {model_idx + 1} with SESSION {s_idx + 1}")
-            self._models[model_idx].fit(session.train, session.val, session.train_slices, session.val_slices, use_timer)
-            train_time_lst.append(self._models[model_idx].train_time)
-        if use_timer: self.train_time = mean(train_time_lst)
+            self._models[model_idx].fit(session.train, session.val, session.train_slices, session.val_slices)
 
     def evaluate(self, test_person_sessions: [batched_data]):
         loss_lst = []
