@@ -99,6 +99,16 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     # TODO: For cleanup maybe gc.collect as well?
     return loss
 
+def run_boost(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict)
+    n_estimators = 100
+    steps = 10
+    fold = 5
+    random_state = np.random.RandomState(1)
+
+    sample_size     #sample_size needs to be an array where first element is size of source and second element is size of target
+
+
+
 do_param_optimization = False
 
 config = configuration()
