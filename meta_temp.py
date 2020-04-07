@@ -6,6 +6,7 @@ from functools import partial
 from os import chdir
 from os.path import exists
 from tensorflow.keras.backend import clear_session
+from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2 
 from numpy import mean
 
 from config_classes import hyperparameter_list, configuration
@@ -98,15 +99,6 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
     # TODO: For cleanup maybe gc.collect as well?
     return loss
-
-def run_boost(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict)
-    n_estimators = 100
-    steps = 10
-    fold = 5
-    random_state = np.random.RandomState(1)
-
-    sample_size     #sample_size needs to be an array where first element is size of source and second element is size of target
-
 
 
 do_param_optimization = False
