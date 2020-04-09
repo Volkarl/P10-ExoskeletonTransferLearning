@@ -69,28 +69,16 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     gitdir = "P10-ExoskeletonTransferLearning"
     if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
 
-    train_ppl_amount = 3
-    train_spp = 5 # Train_Sheets_Per_Person
-    train_sheets = train_ppl_amount * train_spp
-    test_ppl_amount = 1
-    test_spp = 5 # Test_Sheets_Per_Person 
-    test_sheets = test_ppl_amount * test_spp
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+    model = Model_Ensemble_CNN(find_datashape(config, hyplist, hyperparameter_dict), config.train_ppl_amount, config, hyplist, hyperparameter_dict)
 
-    train_people_files = [zip(config.dataset_file_paths[i:i+train_spp], config.dataset_sheet_titles[i:i+train_spp]) for i in range(0, train_sheets, train_spp)]
-    test_people_files = [zip(config.dataset_file_paths[i:i+test_spp], config.dataset_sheet_titles[i:i+test_spp]) for i in range(train_sheets, train_sheets + test_sheets, test_spp)]
-    # Note that this grabs the test sheets from right after our train sheets, not necessarily the last sheets
-    # TODO Maybe put these person-tuple-calculations into the configuration class
-    # TODO: GetPeopleIterator
-
-    model = Model_Ensemble_CNN(find_datashape(config, hyplist, hyperparameter_dict), train_ppl_amount, config, hyplist, hyperparameter_dict)
-
-    for idx, person in enumerate(train_people_files):
-        print(f"PERSON {idx + 1} of {train_ppl_amount}")
+    for idx, person in enumerate(train_ppl_file_iter):
+        print(f"PERSON {idx + 1} of {config.train_ppl_amount}")
         sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
         model.fit(idx, sessions)
 
     loss = 0
-    for idx, person in enumerate(test_people_files):
+    for idx, person in enumerate(test_ppl_file_iter):
         sessions = [data.process_sheet(path, sheet, config.cnn_testsplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
         loss = model.evaluate(sessions)
 
