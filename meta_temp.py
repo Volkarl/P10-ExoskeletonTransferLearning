@@ -6,6 +6,7 @@ from functools import partial
 from os import chdir
 from os.path import exists
 from tensorflow.keras.backend import clear_session
+from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2 
 from numpy import mean
 
 from config_classes import hyperparameter_list, configuration
@@ -86,6 +87,7 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
     # TODO: For cleanup maybe gc.collect as well?
     return loss
+
 
 do_param_optimization = False
 
