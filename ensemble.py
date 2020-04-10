@@ -14,6 +14,7 @@ class Model_Ensemble_CNN:
             self._models[model_idx].fit(session.train, session.val, session.train_slices, session.val_slices)
 
     def evaluate(self, test_person_sessions: [batched_data]):
+        print("Testing novel person")
         loss_lst = []
         for model in self._models:
             for session in test_person_sessions:
