@@ -30,11 +30,14 @@ def fit_cnn_with_person(idx, length, person, model):
     print(f"DATASET {idx} of {length}")
     model.fit(person.train, person.val, person.train_slices, person.val_slices)
 
+def setup_windows_linux_pathing():
+    gitdir = "P10-ExoskeletonTransferLearning"
+    if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
+
 def run_cnn(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     # TODO Need to fix this one to work with multiple people with multiple sessions, such that I dont just assume that one person = 1 sheet
 
-    gitdir = "P10-ExoskeletonTransferLearning"
-    if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
+    setup_windows_linux_pathing()
 
     skip_amount = 15 # should be 0
     test_people_num = -1 # last person is test
@@ -67,8 +70,7 @@ def find_datashape(config: configuration, hyplist: hyperparameter_list, hyperpar
     return person.datashape
 
 def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
-    gitdir = "P10-ExoskeletonTransferLearning"
-    if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
+    setup_windows_linux_pathing()
 
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
     model = Model_Ensemble_CNN(find_datashape(config, hyplist, hyperparameter_dict), config.train_ppl_amount, config, hyplist, hyperparameter_dict)
@@ -88,6 +90,15 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     # TODO: For cleanup maybe gc.collect as well?
     return loss
 
+def run_TwoStageTrAdaBoost(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    setup_windows_linux_pathing()
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+
+    #for idx, person in enumerate(train_ppl_file_iter):
+    #    print(f"PERSON {idx + 1} of {config.train_ppl_amount}")
+    #    sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
+    #   model.fit(idx, sessions)
+    # TODO dont quite know how we're going to do train, test, validation splits right now
 
 do_param_optimization = False
 
