@@ -6,8 +6,8 @@ from functools import partial
 from os import chdir
 from os.path import exists
 from tensorflow.keras.backend import clear_session
-from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2 
-from numpy import mean
+from Fixed_AdaBoostR2 import AdaBoostR2 
+import numpy as np
 
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
@@ -18,7 +18,8 @@ from ensemble import Model_Ensemble_CNN
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
         #loss = run_cnn(config, hyplist, hyperparameter_dict)
-        loss = run_ensemble(config, hyplist, hyperparameter_dict)
+        #loss = run_ensemble(config, hyplist, hyperparameter_dict)
+        loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
         return { "loss": loss, 
                  "status": STATUS_OK }
     except Exception as e:
@@ -61,7 +62,7 @@ def run_cnn(config: configuration, hyplist: hyperparameter_list, hyperparameter_
 
     del model # Remove all references from the model, such that the garbage collector claims it
     clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
-    return mean(loss_lst)
+    return np.mean(loss_lst)
 
 def find_datashape(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     # We load the first sheet as a test-run to see which datashape it ends up with
@@ -90,9 +91,62 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     # TODO: For cleanup maybe gc.collect as well?
     return loss
 
+def flatten_split_sessions(sessions):
+    sliced_X, sliced_Y = [], []
+    for session in sessions: # Flatten the outer lists
+        # Seperate the sensor values (x) from the ground truth values (y)
+        sliced_X.extend(session.x_train)
+        sliced_X.extend(session.x_val)
+        sliced_Y.extend(session.y_train)
+        sliced_Y.extend(session.y_val)
+
+        # TODO: BE AWARE THAT WE CURRENTLY IGNORE BATCHSIZE, EPOCHS, SHUFFLEBUFFERSIZE
+    return np.array(sliced_X), np.array(sliced_Y) # make into numpy arrays, such that we have a shape property
+
+def unpack_sessions(person_iterator, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    sessions = []
+    for person in person_iterator:
+        for session in [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]:
+            sessions.append(session)
+    return sessions
+
+def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    setup_windows_linux_pathing()
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+
+    #TODO It currently fails in STEP_1, try fix
+    #TODO Then also remember to check to see how it works with multiple people rather than just one
+
+    # Possible TODO: Should we fully yeet batchdata and add batch_size and epochs into fit function instead? 
+    # We could perhaps replicate shuffle_buffer as just a manual shuffling around a moving point? Then we would still have that hyperparameter
+
+
+
+    # TRAINING
+    sessions = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sliced_X, sliced_Y = flatten_split_sessions(sessions)
+    
+    base_estimator = cnn.Model_CNN(find_datashape(config, hyplist, hyperparameter_dict), config, hyplist, hyperparameter_dict)
+    len_source = (len(sliced_X) // 3) * 2 # TODO: For now, 66% of data is source, rest is target
+    ada_model = AdaBoostR2(base_estimator, [len_source, len(sliced_X) - len_source])
+    ada_model.fit(sliced_X, sliced_Y)
+
+    del sliced_X, sliced_Y, sessions # Remove from memory
+
+    # TESTING
+    sessions = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sliced_X, sliced_Y = flatten_split_sessions(sessions)
+    predictions = ada_model.predict(sliced_X)
+    # TODO Calculate MeanSquaredError or MeanAbsError with sliced_Y. Preferably through Keras
+    return 0
+
 def run_TwoStageTrAdaBoost(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     setup_windows_linux_pathing()
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+
+#    source_sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in train_ppl_file_iter]
+ #   target_sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in test_ppl_file_iter]
+
 
     #for idx, person in enumerate(train_ppl_file_iter):
     #    print(f"PERSON {idx + 1} of {config.train_ppl_amount}")

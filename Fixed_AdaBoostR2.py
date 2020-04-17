@@ -25,7 +25,7 @@ from copy import deepcopy
 class AdaBoostR2:
     def __init__(self,
                  base_estimator,
-                 sample_size = None,
+                 sample_size,
                  n_estimators = 50,
                  learning_rate = 1.,
                  random_state = np.random.mtrand._rand):
@@ -35,7 +35,7 @@ class AdaBoostR2:
         self.learning_rate = learning_rate
         self.random_state = random_state
         
-    def check_parameters(self):
+    def check_parameters(self, X):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
         if self.sample_size is None:
@@ -54,9 +54,7 @@ class AdaBoostR2:
 
             # Check that the sample weights sum is positive
             if sample_weights.sum() <= 0:
-                raise ValueError(
-                      "Attempting to fit with a non-positive "
-                      "weighted number of samples.")
+                raise ValueError("Attempting to fit with a non-positive weighted number of samples.")
 
     def clear_results(self):
         # Clear any previous fit results
@@ -136,19 +134,19 @@ class AdaBoostR2:
         return sample_weights, estimator_weight, estimator_error
 
     def fit(self, X, y, sample_weight=None):
-        self.check_parameters()
+        self.check_parameters(X)
         self.init_weights(sample_weight, X)
         self.clear_results()
 
         for ada_iteration in range(self.n_estimators): # this for loop is sequential and does not support parallel(revison is needed if making parallel)
             sample_weight, estimator_weight, estimator_error = self.perform_boost(ada_iteration, X, y, sample_weight)
             # Early termination
-            if sample_weight is None:
+            if sample_weight is None: # When estimator error gets too large, we terminate
                 break
 
             self.estimator_weights_[ada_iteration] = estimator_weight
             self.estimator_errors_[ada_iteration] = estimator_error
-            # Stop if error is zero
+            # Stop if error is zero, ergo we made a perfect learner. This will never happen unless we have a tiny or a super simple dataset
             if estimator_error == 0:
                 break
 

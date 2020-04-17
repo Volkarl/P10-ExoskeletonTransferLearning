@@ -76,7 +76,7 @@ class configuration:
         self.ada_datasplit = (0, 0.8, 0.9)
         self.cnn_datasplit = (0, 0.9, 1) # Empty test set
         self.cnn_testsplit = (0, 0, 0) # All values will be part of the test set
-        self.train_ppl_amount = 3
+        self.train_ppl_amount = 1
         self.train_sheets_per_person = 5 
         self.test_ppl_amount = 1
         self.test_sheets_per_person = 5 
