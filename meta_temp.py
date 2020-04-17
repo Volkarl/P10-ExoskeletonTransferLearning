@@ -6,8 +6,8 @@ from functools import partial
 from os import chdir
 from os.path import exists
 from tensorflow.keras.backend import clear_session
-from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2 
-from numpy import mean
+from Fixed_AdaBoostR2 import AdaBoostR2 
+import numpy as np
 
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
@@ -18,7 +18,8 @@ from ensemble import Model_Ensemble_CNN
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
         #loss = run_cnn(config, hyplist, hyperparameter_dict)
-        loss = run_ensemble(config, hyplist, hyperparameter_dict)
+        #loss = run_ensemble(config, hyplist, hyperparameter_dict)
+        loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
         return { "loss": loss, 
                  "status": STATUS_OK }
     except Exception as e:
@@ -30,11 +31,14 @@ def fit_cnn_with_person(idx, length, person, model):
     print(f"DATASET {idx} of {length}")
     model.fit(person.train, person.val, person.train_slices, person.val_slices)
 
+def setup_windows_linux_pathing():
+    gitdir = "P10-ExoskeletonTransferLearning"
+    if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
+
 def run_cnn(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     # TODO Need to fix this one to work with multiple people with multiple sessions, such that I dont just assume that one person = 1 sheet
 
-    gitdir = "P10-ExoskeletonTransferLearning"
-    if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
+    setup_windows_linux_pathing()
 
     skip_amount = 15 # should be 0
     test_people_num = -1 # last person is test
@@ -58,7 +62,7 @@ def run_cnn(config: configuration, hyplist: hyperparameter_list, hyperparameter_
 
     del model # Remove all references from the model, such that the garbage collector claims it
     clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
-    return mean(loss_lst)
+    return np.mean(loss_lst)
 
 def find_datashape(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     # We load the first sheet as a test-run to see which datashape it ends up with
@@ -67,31 +71,18 @@ def find_datashape(config: configuration, hyplist: hyperparameter_list, hyperpar
     return person.datashape
 
 def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
-    gitdir = "P10-ExoskeletonTransferLearning"
-    if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
+    setup_windows_linux_pathing()
 
-    train_ppl_amount = 3
-    train_spp = 5 # Train_Sheets_Per_Person
-    train_sheets = train_ppl_amount * train_spp
-    test_ppl_amount = 1
-    test_spp = 5 # Test_Sheets_Per_Person 
-    test_sheets = test_ppl_amount * test_spp
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+    model = Model_Ensemble_CNN(find_datashape(config, hyplist, hyperparameter_dict), config.train_ppl_amount, config, hyplist, hyperparameter_dict)
 
-    train_people_files = [zip(config.dataset_file_paths[i:i+train_spp], config.dataset_sheet_titles[i:i+train_spp]) for i in range(0, train_sheets, train_spp)]
-    test_people_files = [zip(config.dataset_file_paths[i:i+test_spp], config.dataset_sheet_titles[i:i+test_spp]) for i in range(train_sheets, train_sheets + test_sheets, test_spp)]
-    # Note that this grabs the test sheets from right after our train sheets, not necessarily the last sheets
-    # TODO Maybe put these person-tuple-calculations into the configuration class
-    # TODO: GetPeopleIterator
-
-    model = Model_Ensemble_CNN(find_datashape(config, hyplist, hyperparameter_dict), train_ppl_amount, config, hyplist, hyperparameter_dict)
-
-    for idx, person in enumerate(train_people_files):
-        print(f"PERSON {idx + 1} of {train_ppl_amount}")
+    for idx, person in enumerate(train_ppl_file_iter):
+        print(f"PERSON {idx + 1} of {config.train_ppl_amount}")
         sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
         model.fit(idx, sessions)
 
     loss = 0
-    for idx, person in enumerate(test_people_files):
+    for idx, person in enumerate(test_ppl_file_iter):
         sessions = [data.process_sheet(path, sheet, config.cnn_testsplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
         loss = model.evaluate(sessions)
 
@@ -100,6 +91,68 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     # TODO: For cleanup maybe gc.collect as well?
     return loss
 
+def flatten_split_sessions(sessions):
+    sliced_X, sliced_Y = [], []
+    for session in sessions: # Flatten the outer lists
+        # Seperate the sensor values (x) from the ground truth values (y)
+        sliced_X.extend(session.x_train)
+        sliced_X.extend(session.x_val)
+        sliced_Y.extend(session.y_train)
+        sliced_Y.extend(session.y_val)
+
+        # TODO: BE AWARE THAT WE CURRENTLY IGNORE BATCHSIZE, EPOCHS, SHUFFLEBUFFERSIZE
+    return np.array(sliced_X), np.array(sliced_Y) # make into numpy arrays, such that we have a shape property
+
+def unpack_sessions(person_iterator, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    sessions = []
+    for person in person_iterator:
+        for session in [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]:
+            sessions.append(session)
+    return sessions
+
+def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    setup_windows_linux_pathing()
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+
+    #TODO It currently fails in STEP_1, try fix
+    #TODO Then also remember to check to see how it works with multiple people rather than just one
+
+    # Possible TODO: Should we fully yeet batchdata and add batch_size and epochs into fit function instead? 
+    # We could perhaps replicate shuffle_buffer as just a manual shuffling around a moving point? Then we would still have that hyperparameter
+
+
+
+    # TRAINING
+    sessions = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sliced_X, sliced_Y = flatten_split_sessions(sessions)
+    
+    base_estimator = cnn.Model_CNN(find_datashape(config, hyplist, hyperparameter_dict), config, hyplist, hyperparameter_dict)
+    len_source = (len(sliced_X) // 3) * 2 # TODO: For now, 66% of data is source, rest is target
+    ada_model = AdaBoostR2(base_estimator, [len_source, len(sliced_X) - len_source])
+    ada_model.fit(sliced_X, sliced_Y)
+
+    del sliced_X, sliced_Y, sessions # Remove from memory
+
+    # TESTING
+    sessions = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sliced_X, sliced_Y = flatten_split_sessions(sessions)
+    predictions = ada_model.predict(sliced_X)
+    # TODO Calculate MeanSquaredError or MeanAbsError with sliced_Y. Preferably through Keras
+    return 0
+
+def run_TwoStageTrAdaBoost(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    setup_windows_linux_pathing()
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+
+#    source_sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in train_ppl_file_iter]
+ #   target_sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in test_ppl_file_iter]
+
+
+    #for idx, person in enumerate(train_ppl_file_iter):
+    #    print(f"PERSON {idx + 1} of {config.train_ppl_amount}")
+    #    sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
+    #   model.fit(idx, sessions)
+    # TODO dont quite know how we're going to do train, test, validation splits right now
 
 do_param_optimization = False
 

@@ -76,3 +76,18 @@ class configuration:
         self.ada_datasplit = (0, 0.8, 0.9)
         self.cnn_datasplit = (0, 0.9, 1) # Empty test set
         self.cnn_testsplit = (0, 0, 0) # All values will be part of the test set
+        self.train_ppl_amount = 1
+        self.train_sheets_per_person = 5 
+        self.test_ppl_amount = 1
+        self.test_sheets_per_person = 5 
+
+    def get_people_iterators(self):
+        train_spp = self.train_sheets_per_person
+        train_sheets = self.train_ppl_amount * train_spp
+        test_spp = self.test_sheets_per_person
+        test_sheets = self.test_ppl_amount * test_spp
+
+        train_people_files = [zip(self.dataset_file_paths[i:i+train_spp], self.dataset_sheet_titles[i:i+train_spp]) for i in range(0, train_sheets, train_spp)]
+        test_people_files = [zip(self.dataset_file_paths[i:i+test_spp], self.dataset_sheet_titles[i:i+test_spp]) for i in range(train_sheets, train_sheets + test_sheets, test_spp)]
+        # Note that this grabs the test sheets from right after our train sheets, not necessarily the last sheets
+        return train_people_files, test_people_files

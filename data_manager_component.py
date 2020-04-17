@@ -4,7 +4,7 @@ import tensorflow as tf
 from config_classes import hyperparameter_list, configuration
 
 class batched_data:
-    def __init__(self, datashape, batched_train_data, batched_val_data, batched_test_data, train_slices, val_slices, test_slices):
+    def __init__(self, datashape, batched_train_data, batched_val_data, batched_test_data, train_slices, val_slices, test_slices,    x_train, y_train, x_val, y_val, x_test, y_test):
         self.datashape = datashape
         self.train = batched_train_data
         self.val = batched_val_data
@@ -12,6 +12,13 @@ class batched_data:
         self.train_slices = train_slices
         self.val_slices = val_slices
         self.test_slices = test_slices
+
+        self.x_train = x_train # TODO THESE VALUES ARE A TEMPORARY SOLUTION, BECAUSE I DONT KNOW IF I SHOULD REMOVE BATCH_DATA OR NOT
+        self.y_train = y_train 
+        self.x_val = x_val 
+        self.y_val = y_val 
+        self.x_test = x_test 
+        self.y_test = y_test
 
 # Data layout in the xlsx files
 columns_data = ['1' ,'2', '3', '4', '5', '6', '7', '8', 'N/A_1', 'N/A_2', 'angle', 'time', 'session']
@@ -30,7 +37,9 @@ def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyp
     datashape = x_train.shape[-2:]
     batch_train, batch_val, batch_test = batch_data(x_train, y_train, x_val, y_val, x_test, y_test, config.batch_size, 
                                                     config.epochs, hyperparameter_dict[hyplist.shuffle_buffer_size])
-    return batched_data(datashape, batch_train, batch_val, batch_test, len(x_train), len(x_val), len(x_test))
+
+    #return batched_data(datashape, batch_train, batch_val, batch_test, len(x_train), len(x_val), len(x_test))
+    return batched_data(datashape, batch_train, batch_val, batch_test, len(x_train), len(x_val), len(x_test), x_train, y_train, x_val, y_val, x_test, y_test)
 
 
 def batch_data(x_train, y_train, x_val, y_val, x_test, y_test, batch_size, epochs, shuffle_buffer_size):

@@ -264,7 +264,7 @@ class TwoStageTrAdaBoostR2:
 
             self.errors_.append(np.array(error).mean())
 
-            sample_weight = self._twostage_adaboostR2(istep, X, y, sample_weight)
+            sample_weight = self._twostage_adaboostR2(istep, X, y, sample_weight)0
 
             if sample_weight is None:
                 break
