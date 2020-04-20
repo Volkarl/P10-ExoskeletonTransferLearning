@@ -19,17 +19,18 @@ Step (5) is different when we use it for Two-StageTrAdaBoost.R2. Here, we never 
 # TODO Wrap my CNN stuff with the SKLearn wrapper function, KerasRegressor 
 
 import numpy as np
-from copy import deepcopy
+#from copy import deepcopy
+import tensorflow as tf
 
 
 class AdaBoostR2:
     def __init__(self,
-                 base_estimator,
+                 create_base_estimator_fn,
                  sample_size,
                  n_estimators = 50,
                  learning_rate = 1.,
                  random_state = np.random.mtrand._rand):
-        self.base_estimator = base_estimator
+        self.create_base_estimator_fn = create_base_estimator_fn
         self.sample_size = sample_size
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -115,7 +116,16 @@ class AdaBoostR2:
         return sample_weights
 
     def perform_boost(self, boost_iteration, X, y, sample_weights):
-        estimator = deepcopy(self.base_estimator)
+        #estimator = deepcopy(self.base_estimator)
+        # TODO: this is a future problem. I cannot deepcopy, because it pickles the model object, and that doesn't work for some reason
+        # This will be problematic when I try to use more pre-trained models as my base learners
+        # Solution may be to: transfer the weights to an identical model with model.load_weights
+        # USE https://www.tensorflow.org/api_docs/python/tf/keras/models/clone_model
+        # WITH BestModel.set_weights(Model.get_weights())
+        # estimator = tf.keras.models.clone_model(self.base_estimator)
+        # estimator.set_weights(self.base_estimator.get_weights())
+
+        estimator = self.create_base_estimator_fn()
         self.step_1(estimator, X, y, sample_weights)
         error_vect = self.step_2(estimator, X, y)
         estimator_error = self.step_3(sample_weights, error_vect)

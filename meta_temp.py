@@ -126,9 +126,12 @@ def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperpar
     sessions = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
     sliced_X, sliced_Y = flatten_split_sessions(sessions)
     
-    base_estimator = cnn.Model_CNN(find_datashape(config, hyplist, hyperparameter_dict), config, hyplist, hyperparameter_dict)
+    #base_estimator = cnn.Model_CNN(find_datashape(config, hyplist, hyperparameter_dict), config, hyplist, hyperparameter_dict)
+    ds = find_datashape(config, hyplist, hyperparameter_dict)
+    create_base_estimator_fn = lambda: cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
+
     len_source = (len(sliced_X) // 3) * 2 # TODO: For now, 66% of data is source, rest is target
-    ada_model = AdaBoostR2(base_estimator, [len_source, len(sliced_X) - len_source])
+    ada_model = AdaBoostR2(create_base_estimator_fn, [len_source, len(sliced_X) - len_source])
     ada_model.fit(sliced_X, sliced_Y)
 
     del sliced_X, sliced_Y, sessions # Remove from memory
