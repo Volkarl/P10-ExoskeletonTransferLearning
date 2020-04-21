@@ -56,6 +56,7 @@ class AdaBoostR2:
             # Check that the sample weights sum is positive
             if sample_weights.sum() <= 0:
                 raise ValueError("Attempting to fit with a non-positive weighted number of samples.")
+        return sample_weights
 
     def clear_results(self):
         # Clear any previous fit results
@@ -74,13 +75,14 @@ class AdaBoostR2:
         bootstrap_idx = np.array(bootstrap_idx, copy=False)
 
         # Fit on the bootstrapped sample and obtain a prediction for all samples in the training set
-        estimator.fit(X[bootstrap_idx], y[bootstrap_idx]) 
+        estimator.fit_ada(X[bootstrap_idx], y[bootstrap_idx]) 
+        # Fits on a total number of samples that is the same as what we started with, except each one is randomly selected (so there may be overlap, and some might not get chosen at all)
         # We only fit on the bootstrapped sample, however, later we predict on the entire sample - a way to avoid overfitting
         self.estimators_.append(estimator)  # add the fitted estimator
 
-    def step_2(self, estimator, X, y):
-        y_predict = estimator.predict(X)          ### TODO: FIX TO KERAS
-        error_vect = np.abs(y_predict - y)
+    def step_2(self, estimator, X, Y):
+        y_predict = estimator.predict(X)
+        error_vect = np.array([np.abs(y[0] - y_truth[0]) for y, y_truth in zip(y_predict, Y)])
         error_max = error_vect.max()
 
         if error_max != 0.:
@@ -89,7 +91,9 @@ class AdaBoostR2:
     
     def step_3(self, sample_weights, error_vect):
         # Calculate the average loss
-        estimator_error = (sample_weights * error_vect).sum()
+        estimator_vect = np.array([sw * ev for sw, ev in zip(sample_weights, error_vect)])
+        #estimator_vect = sample_weights * error_vect
+        estimator_error = estimator_vect.sum()
         return estimator_error
 
     def step_4(self, estimator_error):
@@ -101,11 +105,19 @@ class AdaBoostR2:
 
     def step_5(self, beta, sample_weights, boost_iteration, error_vect):
         # Boost weight using AdaBoost.R2 alg, except the weight of the source data, which is not allowed to change
+        #source_weights = sample_weights[:-self.sample_size[-1]]
+        #target_weights = sample_weights[-self.sample_size[-1]:]
+
         source_weight_sum = np.sum(sample_weights[:-self.sample_size[-1]]) / np.sum(sample_weights)
         target_weight_sum = np.sum(sample_weights[-self.sample_size[-1]:]) / np.sum(sample_weights)
 
         if not boost_iteration == self.n_estimators - 1:
-            sample_weights[-self.sample_size[-1]:] *= np.power(beta, (1. - error_vect[-self.sample_size[-1]:]) * self.learning_rate)
+            #sample_weights[-self.sample_size[-1]:] *= np.power(beta, (1. - error_vect[-self.sample_size[-1]:]) * self.learning_rate)
+
+            sample_weights[-self.sample_size[-1]:] = [w * np.power(beta, (1. - e) * self.learning_rate) for w, e in zip(sample_weights[-self.sample_size[-1]:], error_vect[-self.sample_size[-1]:])]
+            #for w, e in zip(target_weights, error_vect[-self.sample_size[-1]:]):
+            #    w = w * np.power(beta, (1. - e) * self.learning_rate)
+
             # make the sum weight of the source data not changing
             source_weight_sum_new = np.sum(sample_weights[:-self.sample_size[-1]]) / np.sum(sample_weights)
             target_weight_sum_new = np.sum(sample_weights[-self.sample_size[-1]:]) / np.sum(sample_weights)
@@ -143,15 +155,15 @@ class AdaBoostR2:
 
         return sample_weights, estimator_weight, estimator_error
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weights=None):
         self.check_parameters(X)
-        self.init_weights(sample_weight, X)
+        sample_weights = self.init_weights(sample_weights, X)
         self.clear_results()
 
         for ada_iteration in range(self.n_estimators): # this for loop is sequential and does not support parallel(revison is needed if making parallel)
-            sample_weight, estimator_weight, estimator_error = self.perform_boost(ada_iteration, X, y, sample_weight)
+            sample_weights, estimator_weight, estimator_error = self.perform_boost(ada_iteration, X, y, sample_weights)
             # Early termination
-            if sample_weight is None: # When estimator error gets too large, we terminate
+            if sample_weights is None: # When estimator error gets too large, we terminate
                 break
 
             self.estimator_weights_[ada_iteration] = estimator_weight
@@ -160,26 +172,59 @@ class AdaBoostR2:
             if estimator_error == 0:
                 break
 
-            sample_weight_sum = np.sum(sample_weight)
+            sample_weight_sum = np.sum(sample_weights)
             # Stop if the sum of sample weights has become non-positive
             if sample_weight_sum <= 0:
                 break
             if ada_iteration < self.n_estimators - 1:
                 # Normalize
-                sample_weight /= sample_weight_sum
+                sample_weights /= sample_weight_sum
         return self
+
+
+    def weighted_median(self, df, val, weight):
+        df_sorted = df.sort_values(val)
+        cumsum = df_sorted[weight].cumsum()
+        cutoff = df_sorted[weight].sum() / 2.
+        return df_sorted[cumsum >= cutoff][val].iloc[0]
+
 
     def predict(self, X):
         # Evaluate predictions of all estimators
-        predictions = np.array([est.predict(X) for est in self.estimators_]).T
+        predictions = [est.predict(X) for est in self.estimators_]
+        predictions = [np.concatenate(est, axis=0) for est in predictions] # Flatten inner array of predictions
 
+        pd.dataFrame(predictions)
+
+        # TODO ADD Weighted median
+
+
+        weight_cdf = []
+        for est in flatpred:
+            sorted_idx = np.argsort(est)
+            weight_cdf.append(np.cumsum(self.estimator_weights_[sorted_idx]))
+        
+
+
+        #sorted_idx = np.argsort(flatsamples, axis=1)
+        #weight_cdf = np.cumsum(self.estimator_weights_[sorted_idx], axis=1)
+        
         # Sort the predictions, such that each sample in X, now has a sorted array of results, lowest to highest, which we use for selecting the median value
-        sorted_idx = np.argsort(predictions, axis=1)
+        #sorted_idx = np.argsort(predictions, axis=1)
 
-        # Find index of median prediction for each sample
-        weight_cdf = np.cumsum(self.estimator_weights_[sorted_idx], axis=1)
-        median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
-        median_idx = median_or_above.argmax(axis=1)
+
+        # Calculate the cumulative sum arrays for each sample, over all our estimators. So we end up with a matrix, 50 estimators going down, all our samples going right. Cumsum goes down as well.
+        #weight_cdf = np.cumsum(self.estimator_weights_[sorted_idx], axis=1)
+
+        flipper = weight_cdf.transpose()
+        median_idx = []
+        for sample in flipper:
+            median_idx.append(np.argsort(sample)[sample.max()//2])
+
+
+        # Find the weighted median prediction for each sample
+        #median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis] # returns bool for each sample, depending on if it is ...? ???
+        #median_idx = median_or_above.argmax(axis=1)
 
         median_estimators = sorted_idx[np.arange(X.shape[0]), median_idx]
 

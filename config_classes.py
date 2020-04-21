@@ -62,7 +62,7 @@ class configuration:
         self.dataset_file_paths =   ["SingleSessionData",   "SingleSessionData",    "SingleSessionData",        "SingleSessionData",    "SingleSessionData",        "SessionToSessionOne",  "SessionToSessionOne",  "SessionToSessionOne",      "SessionToSessionOne",      "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour"]
         self.dataset_sheet_titles = ["data_Uniform",        "data_NonUniform",      "data_NonUniformWithPause", "data_NonUniformTwo",   "data_UniformWithPause",    "data_Uniform",         "data_NonUniform",      "data_NonUniformWithPause", "data_UniformWithPause",    "data_Uniform",         "data_UniformTwo",      "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",             "data_UniformTwo",          "data_NonUniform",          "data_NonUniformTwo",       "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",         "data_UniformTwo"]
         self.attempt_name = "attempt_name"
-        self.granularity = 3
+        self.granularity = 10
         self.step_size_sliding_window = 1
         self.future_target = 1
         self.epochs = 10

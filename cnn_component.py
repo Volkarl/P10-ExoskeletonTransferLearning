@@ -52,5 +52,11 @@ class Model_CNN:
     def fit(self, batched_train_data, batched_val_data, train_slices, val_slices):
         fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, self._config, self._hyplist, self._hyperparameter_dict)
 
+    def fit_ada(self, x, y):
+        self._model.fit(x, y, verbose=0)
+
+    def predict(self, x):
+        return self._model.predict(x)
+
     def evaluate(self, batched_test_data):
         return evaluate_model_cnn(self._model, batched_test_data)
