@@ -1,7 +1,7 @@
 """
 Code is based upon github.com/jay15summer/Two-stage-TrAdaboost.R2, modified for usage with Keras
 ------------------------------------------------------------------------------------------------
-Algorithm: AdaBoost.R2
+Algorithm: AdaBoost.R2 THAT IS NOT ALLOWED TO CHANGE SOURCE VALUES
 
 Input: source+target datasets, weight vector, amount of adaboost iterations N (how many estimators we will try out), 
 For each adaboost iteration, N:
@@ -21,6 +21,7 @@ Step (5) is different when we use it for Two-StageTrAdaBoost.R2. Here, we never 
 import numpy as np
 #from copy import deepcopy
 import tensorflow as tf
+from sklearn.metrics import mean_absolute_error
 
 
 class AdaBoostR2:
@@ -181,52 +182,27 @@ class AdaBoostR2:
                 sample_weights /= sample_weight_sum
         return self
 
-
-    def weighted_median(self, df, val, weight):
-        df_sorted = df.sort_values(val)
-        cumsum = df_sorted[weight].cumsum()
-        cutoff = df_sorted[weight].sum() / 2.
-        return df_sorted[cumsum >= cutoff][val].iloc[0]
-
-
     def predict(self, X):
         # Evaluate predictions of all estimators
         predictions = [est.predict(X) for est in self.estimators_]
-        predictions = [np.concatenate(est, axis=0) for est in predictions] # Flatten inner array of predictions
+        predictions = [np.concatenate(est, axis=0) for est in predictions] # Flatten inner array of predictions, such that we have predictions[] > estimators[] > samples[] > ground_truth
 
-        pd.dataFrame(predictions)
+        # We have a matrix of estimators X predictions
+        sorted_idx = np.argsort(predictions, axis=0) # sort based on the prediction-axis
 
-        # TODO ADD Weighted median
-
-
-        weight_cdf = []
-        for est in flatpred:
-            sorted_idx = np.argsort(est)
-            weight_cdf.append(np.cumsum(self.estimator_weights_[sorted_idx]))
-        
-
-
-        #sorted_idx = np.argsort(flatsamples, axis=1)
-        #weight_cdf = np.cumsum(self.estimator_weights_[sorted_idx], axis=1)
-        
-        # Sort the predictions, such that each sample in X, now has a sorted array of results, lowest to highest, which we use for selecting the median value
-        #sorted_idx = np.argsort(predictions, axis=1)
-
-
-        # Calculate the cumulative sum arrays for each sample, over all our estimators. So we end up with a matrix, 50 estimators going down, all our samples going right. Cumsum goes down as well.
-        #weight_cdf = np.cumsum(self.estimator_weights_[sorted_idx], axis=1)
-
-        flipper = weight_cdf.transpose()
-        median_idx = []
-        for sample in flipper:
-            median_idx.append(np.argsort(sample)[sample.max()//2])
-
+        # Sort estimators dependin on how their predictions were sorted. So if Est A predicts 0.4 and Est B predicts 0.2, then Est B's weight will be in first, then A's
+        # Because we are looking for the median, the specific values that our estimators made don't matter. This means that now we just figure out which estimator weight
+        # is the median, ergo we know which estimator performed the weighted median prediction.
+        weight_cdf = np.cumsum(self.estimator_weights_[sorted_idx], axis=0)
 
         # Find the weighted median prediction for each sample
-        #median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis] # returns bool for each sample, depending on if it is ...? ???
-        #median_idx = median_or_above.argmax(axis=1)
-
-        median_estimators = sorted_idx[np.arange(X.shape[0]), median_idx]
+        median_weight_values = 0.5 * weight_cdf[-1, :] # Returns one long list of the median weight value, which is of course always the same
+        median_or_above = weight_cdf >= median_weight_values # Returns a Estimator X Prediction array filled with Bool values, telling whether the weight is above the median value or not
+        median_idx = median_or_above.argmax(axis=0) # Returns the index where it finds the maximum value of each sample (ie. a True value). In case there are multiple, it will select the first one it met. 
+        median_estimators = np.array([sorted_idx[median, idx] for idx, median in enumerate(median_idx)])
 
         # Return median predictions
-        return predictions[np.arange(X.shape[0]), median_estimators]
+        return np.array([predictions[est][idx] for idx, est in enumerate(median_estimators)])
+
+    def evaluate(self, y_predictions, y_ground_truth):
+        return mean_absolute_error(y_predictions, y_ground_truth) # TODO Maybe try out mean_squared_error(y_predictions, y_ground_truth) for fun?

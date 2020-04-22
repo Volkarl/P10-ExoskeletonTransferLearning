@@ -140,8 +140,7 @@ def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperpar
     sessions = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
     sliced_X, sliced_Y = flatten_split_sessions(sessions)
     predictions = ada_model.predict(sliced_X)
-    # TODO Calculate MeanSquaredError or MeanAbsError with sliced_Y. Preferably through Keras
-    return 0
+    return ada_model.evaluate(predictions, sliced_Y)
 
 def run_TwoStageTrAdaBoost(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     setup_windows_linux_pathing()
