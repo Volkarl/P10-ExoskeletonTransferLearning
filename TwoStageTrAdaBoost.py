@@ -264,7 +264,7 @@ class TwoStageTrAdaBoostR2:
 
             self.errors_.append(np.array(error).mean())
 
-            sample_weight = self._twostage_adaboostR2(istep, X, y, sample_weight)0
+            sample_weight = self._twostage_adaboostR2(istep, X, y, sample_weight)
 
             if sample_weight is None:
                 break
@@ -381,6 +381,6 @@ class TwoStageTrAdaBoostR2:
     def predict(self, X):
         # select the model with the least CV error
         print(np.array(self.errors_).argmin()) #TODO Debug this, what does argmin() actually return
-        fmodel = self.models_[np.array(self.errors_).argmin()[0]]
+        fmodel = self.models_[np.array(self.errors_).argmin()]
         predictions = fmodel.predict(X)
         return predictions

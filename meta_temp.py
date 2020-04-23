@@ -8,6 +8,11 @@ from os.path import exists
 from tensorflow.keras.backend import clear_session
 from Fixed_AdaBoostR2 import AdaBoostR2 
 import numpy as np
+from keras.wrappers.scikit_learn import KerasRegressor
+from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2
+from sklearn.metrics import mean_squared_error
+from cnn_component import compile_model_cnn
+import matplotlib.pyplot as plt
 
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
@@ -19,13 +24,48 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         #loss = run_cnn(config, hyplist, hyperparameter_dict)
         #loss = run_ensemble(config, hyplist, hyperparameter_dict)
-        loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
+        #loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
+        loss = run_wrapper(config, hyplist, hyperparameter_dict)
         return { "loss": loss, 
                  "status": STATUS_OK }
     except Exception as e:
         print(str(e))
         return { "status": STATUS_FAIL,
                  "exception": str(e) }
+
+def run_wrapper(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    #Create and wrap base estimator
+    create_base_estimator_fn = lambda: compile_model_cnn(find_datashape(config, hyplist, hyperparameter_dict), config, hyplist, hyperparameter_dict)
+    wrapped_estimator = KerasRegressor(create_base_estimator_fn)
+
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+
+    #Train
+    sessions = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sliced_X_train, sliced_Y_train = flatten_split_sessions(sessions)
+    sliced_Y_train = np.concatenate(sliced_Y_train, axis=0)
+    len_source = (len(sliced_X_train) // 3) * 2
+    regressor = TwoStageTrAdaBoostR2(wrapped_estimator, [len_source, len(sliced_X_train) - len_source], 2, 2, 2)
+    regressor.fit(sliced_X_train, sliced_Y_train)
+
+    #Test
+    sessions = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions)
+    sliced_Y_test = np.concatenate(sliced_Y_test, axis=0)
+
+    prediction = regressor.predict(sliced_X_test)
+
+    """ Plot groundtruth vs prediction
+    plt.figure()
+    plt.plot(sliced_Y_test, c="b", label="target_test", linewidth=0.5)
+    plt.plot(prediction, c="r", label="TwoStageTrAdaBoostR2", linewidth=2)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.title("Two-stage Transfer Learning Boosted Decision Tree Regression")
+    plt.legend()
+    plt.show()
+    """
+    return mean_squared_error(sliced_Y_test, prediction)
 
 def fit_cnn_with_person(idx, length, person, model):
     print(f"DATASET {idx} of {length}")
