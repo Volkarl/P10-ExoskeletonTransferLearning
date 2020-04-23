@@ -113,10 +113,6 @@ def unpack_sessions(person_iterator, config: configuration, hyplist: hyperparame
 def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     setup_windows_linux_pathing()
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
-
-    #TODO It currently fails in STEP_1, try fix
-    #TODO Then also remember to check to see how it works with multiple people rather than just one
-
     # Possible TODO: Should we fully yeet batchdata and add batch_size and epochs into fit function instead? 
     # We could perhaps replicate shuffle_buffer as just a manual shuffling around a moving point? Then we would still have that hyperparameter
 
@@ -131,7 +127,7 @@ def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperpar
     create_base_estimator_fn = lambda: cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
 
     len_source = (len(sliced_X) // 3) * 2 # TODO: For now, 66% of data is source, rest is target
-    ada_model = AdaBoostR2(create_base_estimator_fn, [len_source, len(sliced_X) - len_source], 2)
+    ada_model = AdaBoostR2(create_base_estimator_fn, [len_source, len(sliced_X) - len_source])
     ada_model.fit(sliced_X, sliced_Y)
 
     del sliced_X, sliced_Y, sessions # Remove from memory

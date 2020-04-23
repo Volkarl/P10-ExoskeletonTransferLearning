@@ -79,16 +79,25 @@ def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_i
         labels.append(dataset_ground_truth[i+target_size])
     return np.array(data), np.array(labels)
 
+#def calc_ref_features2(features, ref_point1, ref_point2):
+#    relative_features1 = [subtract_refvalue(obs, obs[ref_point1]) for obs in features.values]
+#    relative_features2 = [subtract_refvalue(obs, obs[ref_point2]) for obs in features.values]
+#    return pd.DataFrame([relative_features1[i] + relative_features2[i] for i in range(0, len(features))])
+#def subtract_refvalue2(obs, ref_value):
+#    return [val - ref_value for idx, val in enumerate(obs)]
+
 def calc_ref_features(features, ref_point1, ref_point2):
     relative_features1 = [subtract_refvalue(obs, obs[ref_point1]) for obs in features.values]
     relative_features2 = [subtract_refvalue(obs, obs[ref_point2]) for obs in features.values]
     return pd.DataFrame([relative_features1[i] + relative_features2[i] for i in range(0, len(features))])
+    # TODO: Make a new method for this, one which removes the two null reference points, and makes it percentage based instead
 
 def subtract_refvalue(obs, ref_value):
     return [val - ref_value for val in obs]
 
 def load_dataset(sheet_path, sheet_title, granularity):
-    sheet_data = pd.read_csv(f"Datasets/{sheet_path}_{sheet_title}_raw_data.csv")
+    # sheet_data = pd.read_csv(f"Datasets/{sheet_path}_{sheet_title}_raw_data.csv") # Our old datasets had this weird naming scheme
+    sheet_data = pd.read_csv(f"Datasets/{sheet_title}.csv")
     sheet_data.columns = columns_data
     return sheet_data
 

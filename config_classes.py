@@ -59,8 +59,10 @@ class hyperparameter_list:
 
 class configuration:
     def __init__(self): 
-        self.dataset_file_paths =   ["SingleSessionData",   "SingleSessionData",    "SingleSessionData",        "SingleSessionData",    "SingleSessionData",        "SessionToSessionOne",  "SessionToSessionOne",  "SessionToSessionOne",      "SessionToSessionOne",      "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour"]
-        self.dataset_sheet_titles = ["data_Uniform",        "data_NonUniform",      "data_NonUniformWithPause", "data_NonUniformTwo",   "data_UniformWithPause",    "data_Uniform",         "data_NonUniform",      "data_NonUniformWithPause", "data_UniformWithPause",    "data_Uniform",         "data_UniformTwo",      "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",             "data_UniformTwo",          "data_NonUniform",          "data_NonUniformTwo",       "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",         "data_UniformTwo"]
+        #OLD self.dataset_file_paths =   ["SingleSessionData",   "SingleSessionData",    "SingleSessionData",        "SingleSessionData",    "SingleSessionData",        "SessionToSessionOne",  "SessionToSessionOne",  "SessionToSessionOne",      "SessionToSessionOne",      "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour"]
+        #OLD self.dataset_sheet_titles = ["data_Uniform",        "data_NonUniform",      "data_NonUniformWithPause", "data_NonUniformTwo",   "data_UniformWithPause",    "data_Uniform",         "data_NonUniform",      "data_NonUniformWithPause", "data_UniformWithPause",    "data_Uniform",         "data_UniformTwo",      "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",             "data_UniformTwo",          "data_NonUniform",          "data_NonUniformTwo",       "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",         "data_UniformTwo"]
+        self.dataset_file_paths = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE"] # Now obsolete
+        self.dataset_sheet_titles = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE"]
         self.attempt_name = "attempt_name"
         self.granularity = 10
         self.step_size_sliding_window = 1
@@ -76,7 +78,7 @@ class configuration:
         self.ada_datasplit = (0, 0.8, 0.9)
         self.cnn_datasplit = (0, 0.9, 1) # Empty test set
         self.cnn_testsplit = (0, 0, 0) # All values will be part of the test set
-        self.train_ppl_amount = 1
+        self.train_ppl_amount = 2
         self.train_sheets_per_person = 5 
         self.test_ppl_amount = 1
         self.test_sheets_per_person = 5 
