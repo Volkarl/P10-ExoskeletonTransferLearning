@@ -10,8 +10,7 @@ from Fixed_AdaBoostR2 import AdaBoostR2
 import numpy as np
 from keras.wrappers.scikit_learn import KerasRegressor
 from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2
-from sklearn.metrics import mean_squared_error
-from cnn_component import compile_model_cnn
+from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
 
 from config_classes import hyperparameter_list, configuration
@@ -35,27 +34,37 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
 
 def run_wrapper(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     #Create and wrap base estimator
-    create_base_estimator_fn = lambda: compile_model_cnn(find_datashape(config, hyplist, hyperparameter_dict), config, hyplist, hyperparameter_dict)
+    create_base_estimator_fn = lambda: cnn.compile_model_cnn(find_datashape(config, hyplist, hyperparameter_dict), config, hyplist, hyperparameter_dict)
     wrapped_estimator = KerasRegressor(create_base_estimator_fn)
-
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
 
     #Train
-    sessions = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    sliced_X_train, sliced_Y_train = flatten_split_sessions(sessions)
+    sessions_source = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sessions_target = sessions_novel_person[0:-1] # Leave the last session for the test set
+    
+    sliced_X_train_source, sliced_Y_train_source = flatten_split_sessions(sessions_source)
+    sliced_X_train_tar, sliced_Y_train_tar = flatten_split_sessions(sessions_target)
+    sliced_X_train, sliced_Y_train = [], []
+    sliced_X_train.extend(sliced_X_train_source)
+    sliced_X_train.extend(sliced_X_train_tar)
+    sliced_Y_train.extend(sliced_Y_train_source)
+    sliced_Y_train.extend(sliced_Y_train_tar)
+    sliced_X_train = np.array(sliced_X_train)
+    sliced_Y_train = np.array(sliced_Y_train)
+
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0)
-    len_source = (len(sliced_X_train) // 3) * 2
-    regressor = TwoStageTrAdaBoostR2(wrapped_estimator, [len_source, len(sliced_X_train) - len_source], 2, 2, 2)
+
+    regressor = TwoStageTrAdaBoostR2(wrapped_estimator, [len(sliced_X_train_source), len(sliced_X_train_tar)], 2, 2, 2) # TODO: 2,2,2 are temp values
     regressor.fit(sliced_X_train, sliced_Y_train)
 
     #Test
-    sessions = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions)
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_novel_person[-1:]) # Test only on the last session from the target person
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0)
 
     prediction = regressor.predict(sliced_X_test)
 
-    """ Plot groundtruth vs prediction
+    #""" # Plot groundtruth vs prediction
     plt.figure()
     plt.plot(sliced_Y_test, c="b", label="target_test", linewidth=0.5)
     plt.plot(prediction, c="r", label="TwoStageTrAdaBoostR2", linewidth=2)
@@ -64,8 +73,8 @@ def run_wrapper(config: configuration, hyplist: hyperparameter_list, hyperparame
     plt.title("Two-stage Transfer Learning Boosted Decision Tree Regression")
     plt.legend()
     plt.show()
-    """
-    return mean_squared_error(sliced_Y_test, prediction)
+    #"""
+    return mean_absolute_error(sliced_Y_test, prediction)
 
 def fit_cnn_with_person(idx, length, person, model):
     print(f"DATASET {idx} of {length}")
