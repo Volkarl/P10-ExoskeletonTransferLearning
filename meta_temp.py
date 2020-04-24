@@ -9,9 +9,11 @@ from tensorflow.keras.backend import clear_session
 from Fixed_AdaBoostR2 import AdaBoostR2 
 import numpy as np
 from keras.wrappers.scikit_learn import KerasRegressor
-from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2
 from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
+
+from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2
+from plotting_experiments import plotstuff
 
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
@@ -21,6 +23,7 @@ from ensemble import Model_Ensemble_CNN
 
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
+        #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
         #loss = run_cnn(config, hyplist, hyperparameter_dict)
         #loss = run_ensemble(config, hyplist, hyperparameter_dict)
         #loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
@@ -200,6 +203,10 @@ def run_TwoStageTrAdaBoost(config: configuration, hyplist: hyperparameter_list, 
     #    sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
     #   model.fit(idx, sessions)
     # TODO dont quite know how we're going to do train, test, validation splits right now
+
+def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    plotstuff(config, hyplist, hyperparameter_dict, flatten_split_sessions)
+    return 0
 
 do_param_optimization = False
 

@@ -26,6 +26,11 @@ columns_features_considered = columns_data[:8]
 column_ground_truth = columns_data[10]
 # Each timestep represents 1 millisecond, 0.001 second. 
 
+def process_sheet_no_slice(sheet_path, sheet_title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    raw_data = load_dataset(sheet_path, sheet_title, config.granularity)
+    _, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict[hyplist.smoothing])
+    return features, ground_truth
+
 def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     raw_data = load_dataset(sheet_path, sheet_title, config.granularity)
     indexes, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict[hyplist.smoothing])
