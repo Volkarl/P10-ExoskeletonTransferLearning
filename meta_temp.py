@@ -23,11 +23,12 @@ from ensemble import Model_Ensemble_CNN
 
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
+        setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        #loss = run_cnn(config, hyplist, hyperparameter_dict)
+        loss = run_cnn(config, hyplist, hyperparameter_dict)
         #loss = run_ensemble(config, hyplist, hyperparameter_dict)
         #loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
-        loss = run_wrapper(config, hyplist, hyperparameter_dict)
+        #loss = run_wrapper(config, hyplist, hyperparameter_dict)
         return { "loss": loss, 
                  "status": STATUS_OK }
     except Exception as e:
@@ -90,27 +91,33 @@ def setup_windows_linux_pathing():
 def run_cnn(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     # TODO Need to fix this one to work with multiple people with multiple sessions, such that I dont just assume that one person = 1 sheet
 
-    setup_windows_linux_pathing()
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+    #sessions_source = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    #sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    #sessions_target = sessions_novel_person[0:-1] # Leave the last session for the test set
+    # TODO should probably change such that we test on only one sheet of the last person, to achieve parity with the other baselines
 
-    skip_amount = 15 # should be 0
-    test_people_num = -1 # last person is test
-    dataset_amount = len(config.dataset_file_paths) - skip_amount + test_people_num
-    train_iterator = zip(config.dataset_file_paths[skip_amount:test_people_num], config.dataset_sheet_titles[skip_amount:test_people_num])
-    test_iterator = zip(config.dataset_file_paths[test_people_num:], config.dataset_sheet_titles[test_people_num:])
-
-    first_path, first_sheet = next(train_iterator)
-    person = data.process_sheet(first_path, first_sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
-    model = cnn.Model_CNN(person.datashape, config, hyplist, hyperparameter_dict)
-    fit_cnn_with_person(1, dataset_amount, person, model)
-
-    for idx, (path, sheet) in enumerate(train_iterator):
-        person = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) # atm 1 person = 1 sheet. Will probably change to 1 p = 5 sheets
-        fit_cnn_with_person(idx + 1, dataset_amount, person, model)
+    model = cnn.Model_CNN(find_datashape(config, hyplist, hyperparameter_dict), config, hyplist, hyperparameter_dict)
+    for person in train_ppl_file_iter:
+        for (path, sheet) in person:
+            session = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
+            model.fit(session.train, session.val, session.train_slices, session.val_slices)
+    
+    sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    session_train = sessions_novel_person[0:-1]
+    session_test = sessions_novel_person[-1:]
+    for session in session_train:
+        model.fit(session.train, session.val, session.train_slices, session.val_slices)
     
     loss_lst = []
-    for path, sheet in test_iterator:
-        person = data.process_sheet(path, sheet, config.cnn_testsplit, config, hyplist, hyperparameter_dict) # atm 1 person = 1 sheet. Will probably change to 1 p = 5 sheets
-        loss_lst.append(model.evaluate(person.test))
+    for session in session_test:
+        loss_lst.append(model.evaluate(session.test))
+
+    #loss_lst = []
+    #for person in test_ppl_file_iter:
+    #    for (path, sheet) in person:
+    #        session = data.process_sheet(path, sheet, config.cnn_testsplit, config, hyplist, hyperparameter_dict)
+    #        loss_lst.append(model.evaluate(session.test))
 
     del model # Remove all references from the model, such that the garbage collector claims it
     clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
@@ -123,8 +130,6 @@ def find_datashape(config: configuration, hyplist: hyperparameter_list, hyperpar
     return person.datashape
 
 def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
-    setup_windows_linux_pathing()
-
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
     model = Model_Ensemble_CNN(find_datashape(config, hyplist, hyperparameter_dict), config.train_ppl_amount, config, hyplist, hyperparameter_dict)
 
@@ -163,7 +168,6 @@ def unpack_sessions(person_iterator, config: configuration, hyplist: hyperparame
     return sessions
 
 def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    setup_windows_linux_pathing()
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
     # Possible TODO: Should we fully yeet batchdata and add batch_size and epochs into fit function instead? 
     # We could perhaps replicate shuffle_buffer as just a manual shuffling around a moving point? Then we would still have that hyperparameter
@@ -191,7 +195,6 @@ def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperpar
     return ada_model.evaluate(predictions, sliced_Y)
 
 def run_TwoStageTrAdaBoost(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    setup_windows_linux_pathing()
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
 
 #    source_sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in train_ppl_file_iter]
@@ -203,6 +206,57 @@ def run_TwoStageTrAdaBoost(config: configuration, hyplist: hyperparameter_list, 
     #    sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
     #   model.fit(idx, sessions)
     # TODO dont quite know how we're going to do train, test, validation splits right now
+
+
+
+
+
+
+def run_Baseline1(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    # CNN on C only
+    # Train set: 4/5th of person C
+    # Test set: 1/5th of person C
+
+    return 0
+
+def run_Baseline2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    # CNN on all data
+    # Train set: person A, B and 4/5ths of C
+    # Test set: 1/5th of person C
+
+    return 0
+
+def run_Baseline3(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    # NOTE: IS THIS ONE EVEN NEEDED?
+    # Ensemble model of CNN
+    # Train set: CNN A = person A, CNN B = person B and CNN C = 4/5ths of C
+    # Test set: 1/5th of person C
+
+    return 0
+
+def run_Baseline4(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    # NOTE: IS THIS ONE EVEN NEEDED?
+    # CNN with layer fine-tuning
+    # Train set: 9/10th of person A, 9/10th of person B -> Then fine tune last layers on 4/5ths of person C
+    # Test set: 1/10th of person A, 1/10th of person B -> After fine tuning of the last layers, test on 1/5ths of person C
+
+    return 0
+
+def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    # Two-Stage AdaBoost.R2 out-of-the-box (using regression decision trees)
+    # Train set: Source is person A + person B. Target is 4/5th of person C.
+    # Test set: 1/5th of person C
+
+    return 0
+
+def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    # Exo-Ada
+    # Train set: Source is person A + person B. Target is 4/5th of person C.
+    # Test set: 1/5th of person C
+
+    return 0
+
+
 
 def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     plotstuff(config, hyplist, hyperparameter_dict, flatten_split_sessions)

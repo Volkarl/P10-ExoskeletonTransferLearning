@@ -61,10 +61,10 @@ class configuration:
     def __init__(self): 
         #OLD self.dataset_file_paths =   ["SingleSessionData",   "SingleSessionData",    "SingleSessionData",        "SingleSessionData",    "SingleSessionData",        "SessionToSessionOne",  "SessionToSessionOne",  "SessionToSessionOne",      "SessionToSessionOne",      "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour"]
         #OLD self.dataset_sheet_titles = ["data_Uniform",        "data_NonUniform",      "data_NonUniformWithPause", "data_NonUniformTwo",   "data_UniformWithPause",    "data_Uniform",         "data_NonUniform",      "data_NonUniformWithPause", "data_UniformWithPause",    "data_Uniform",         "data_UniformTwo",      "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",             "data_UniformTwo",          "data_NonUniform",          "data_NonUniformTwo",       "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",         "data_UniformTwo"]
-        self.dataset_file_paths = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE"] # Now obsolete
-        self.dataset_sheet_titles = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE"]
+        self.dataset_file_paths = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE"] # Now obsolete
+        self.dataset_sheet_titles = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE"]
         self.attempt_name = "attempt_name"
-        self.granularity = 10
+        self.granularity = 3
         self.step_size_sliding_window = 1
         self.future_target = 1
         self.epochs = 10
