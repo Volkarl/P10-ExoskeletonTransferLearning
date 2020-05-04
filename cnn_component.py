@@ -52,7 +52,7 @@ class Model_CNN:
     def fit(self, batched_train_data, batched_val_data, train_slices, val_slices):
         fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, self._config, self._hyplist, self._hyperparameter_dict)
 
-    def fit_ada(self, x, y):
+    def fit_ada(self, x, y): # fit_unbatched
         self._model.fit(x, y, verbose=0) # TODO: INCLUDE BATCH SIZE AND EPOCHS AGAIN
 
     def predict(self, x):
@@ -60,3 +60,8 @@ class Model_CNN:
 
     def evaluate(self, batched_test_data):
         return evaluate_model_cnn(self._model, batched_test_data)
+
+    def evaluate_nonbatched(self, x, y):
+        #pred = self._model.predict(x)
+        #loss = mean_absolute_error(pred, y)
+        return self._model.evaluate(x, y, verbose=2)

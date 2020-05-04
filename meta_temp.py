@@ -25,7 +25,8 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_cnn(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline5(config, hyplist, hyperparameter_dict)
+        #loss = run_cnn(config, hyplist, hyperparameter_dict)
         #loss = run_ensemble(config, hyplist, hyperparameter_dict)
         #loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
         #loss = run_wrapper(config, hyplist, hyperparameter_dict)
@@ -216,15 +217,34 @@ def run_Baseline1(config: configuration, hyplist: hyperparameter_list, hyperpara
     # CNN on C only
     # Train set: 4/5th of person C
     # Test set: 1/5th of person C
+    _, test_ppl_file_iter = config.get_people_iterators()
 
-    return 0
+    sessions = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sliced_X_train, sliced_Y_train = flatten_split_sessions(sessions[:4])
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions[4:])
+
+    ds = find_datashape(config, hyplist, hyperparameter_dict)
+    model = cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
+    model.fit_ada(sliced_X_train, sliced_Y_train) ### TODO: INCLUDE BATCHSIZE EPOCHS AND SHUFFLEBUFFLE
+    return model.evaluate_nonbatched(sliced_X_test, sliced_Y_test)
 
 def run_Baseline2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     # CNN on all data
     # Train set: person A, B and 4/5ths of C
     # Test set: 1/5th of person C
 
-    return 0
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+
+    sessions = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sessions.extend(unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict))
+    sliced_X_train, sliced_Y_train = flatten_split_sessions(sessions[:-1])
+    
+    ds = find_datashape(config, hyplist, hyperparameter_dict)
+    model = cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
+    model.fit_ada(sliced_X_train, sliced_Y_train) ### TODO: INCLUDE BATCHSIZE EPOCHS AND SHUFFLEBUFFLE
+
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions[-1:])
+    return model.evaluate_nonbatched(sliced_X_test, sliced_Y_test)
 
 def run_Baseline3(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     # NOTE: IS THIS ONE EVEN NEEDED?
@@ -242,12 +262,44 @@ def run_Baseline4(config: configuration, hyplist: hyperparameter_list, hyperpara
 
     return 0
 
+def make_2d_array(dataset):
+    # Reshape 3D-array (slices x observations x samples) into 2D-array (slices x samples-samples-samples-samples-...)
+    slices, observations, samples = dataset.shape
+    return dataset.reshape((slices, observations*samples))
+
 def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     # Two-Stage AdaBoost.R2 out-of-the-box (using regression decision trees)
     # Train set: Source is person A + person B. Target is 4/5th of person C.
     # Test set: 1/5th of person C
 
-    return 0
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+
+    sessions_source = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sessions_target = sessions_novel_person[:-1] # Leave the last session for the test set
+    sessions_test = sessions_novel_person[-1:]
+
+    sliced_X_source, sliced_Y_source = flatten_split_sessions(sessions_source)
+    sliced_X_target, sliced_Y_target = flatten_split_sessions(sessions_target)
+    sliced_X_train, sliced_Y_train = [], []
+    sliced_X_train.extend(sliced_X_source)
+    sliced_X_train.extend(sliced_X_target)
+    sliced_Y_train.extend(sliced_Y_source)
+    sliced_Y_train.extend(sliced_Y_target)
+    sliced_X_train = np.array(sliced_X_train)
+    sliced_Y_train = np.array(sliced_Y_train)
+    sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
+    sliced_X_train = make_2d_array(sliced_X_train) # Reshape to work with our DecisionTreeRegressor
+
+    # Create default tradaboost estimator
+    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=2, steps=2, fold=2) # TODO: 2,2,2 are temp values
+    regressor.fit(sliced_X_train, sliced_Y_train)
+
+    # Evaluate
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_test) # Test only on the last session from the target person
+    sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
+    prediction = regressor.predict(sliced_X_test)
+    return mean_absolute_error(sliced_Y_test, prediction)
 
 def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     # Exo-Ada
