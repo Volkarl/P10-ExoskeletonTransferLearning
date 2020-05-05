@@ -85,6 +85,10 @@ class Stage2_TrAdaBoostR2:
             if iboost < self.n_estimators - 1:
                 # Normalize
                 sample_weight /= sample_weight_sum
+            
+
+
+            print(f"Fit done {iboost}")
         return self
 
 

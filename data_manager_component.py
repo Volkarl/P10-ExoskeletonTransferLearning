@@ -57,6 +57,14 @@ def batch_data(x_train, y_train, x_val, y_val, x_test, y_test, batch_size, epoch
     batched_test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(batch_size)
     return batched_train_data, batched_val_data, batched_test_data
 
+#def shuffle_buffer_manual(dataset, buffer_size):
+#    buffer = dataset[0:buffer_size]
+#    shuffled_dataset = []
+#    for i in len(dataset) - buffer_size:
+#        rand_index = rand(buffer)
+#        shuffled_dataset.append(buffer[rand_index])
+#        buffer.remove(rand_index)
+#        buffer.append(dataset[i])
 
 def slice_data(indexes, features, ground_truth, datasplit, past_history, config: configuration):
     (train_start, val_start, test_start) = datasplit

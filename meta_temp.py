@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
 
 from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2
-from plotting_experiments import plotstuff
+from plotting_experiments import plotstuff, make_simple_comparison_plot
 
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
@@ -57,7 +57,6 @@ def run_wrapper(config: configuration, hyplist: hyperparameter_list, hyperparame
     sliced_Y_train.extend(sliced_Y_train_tar)
     sliced_X_train = np.array(sliced_X_train)
     sliced_Y_train = np.array(sliced_Y_train)
-
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0)
 
     regressor = TwoStageTrAdaBoostR2(wrapped_estimator, [len(sliced_X_train_source), len(sliced_X_train_tar)], 2, 2, 2) # TODO: 2,2,2 are temp values
@@ -66,19 +65,10 @@ def run_wrapper(config: configuration, hyplist: hyperparameter_list, hyperparame
     #Test
     sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_novel_person[-1:]) # Test only on the last session from the target person
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0)
-
     prediction = regressor.predict(sliced_X_test)
 
-    #""" # Plot groundtruth vs prediction
-    plt.figure()
-    plt.plot(sliced_Y_test, c="b", label="target_test", linewidth=0.5)
-    plt.plot(prediction, c="r", label="TwoStageTrAdaBoostR2", linewidth=2)
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.title("Two-stage Transfer Learning Boosted Decision Tree Regression")
-    plt.legend()
-    plt.show()
-    #"""
+    # Plot groundtruth vs prediction
+    make_simple_comparison_plot(sliced_Y_test, "target_test", prediction, "TwoStageTrAdaBoostR2", "x", "y", "Two-stage Transfer Learning Boosted Decision Tree Regression")
     return mean_absolute_error(sliced_Y_test, prediction)
 
 def fit_cnn_with_person(idx, length, person, model):
@@ -294,10 +284,13 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Create default tradaboost estimator
     regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=2, steps=2, fold=2) # TODO: 2,2,2 are temp values
     regressor.fit(sliced_X_train, sliced_Y_train)
+    # TODO PUT ESTIMATORS, STEPS AND FOLDS INTO SOME CLASS WHERE HYPEROPT CAN OPTIMIZE IT?
+
 
     # Evaluate
     sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_test) # Test only on the last session from the target person
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
+    sliced_X_test = make_2d_array(sliced_X_test) # Reshape to work with our DecisionTreeRegressor
     prediction = regressor.predict(sliced_X_test)
     return mean_absolute_error(sliced_Y_test, prediction)
 

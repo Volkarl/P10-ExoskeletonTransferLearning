@@ -5,6 +5,16 @@ from config_classes import hyperparameter_list, configuration
 import numpy as np
 from data_manager_component import process_sheet_no_slice
 
+def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_name, title):
+    plt.figure()
+    plt.plot(y1, c="b", label=y1_name, linewidth=0.5)
+    plt.plot(y2, c="r", label=y2_name, linewidth=2)
+    plt.xlabel(x_axis_name)
+    plt.ylabel(y_axis_name)
+    plt.title(title)
+    plt.legend()
+    plt.show()
+
 def unpack_sessions_no_slice(person_iterator, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     session_features, session_truths = [], []
     for person in person_iterator:

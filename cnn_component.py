@@ -53,7 +53,7 @@ class Model_CNN:
         fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, self._config, self._hyplist, self._hyperparameter_dict)
 
     def fit_ada(self, x, y): # fit_unbatched
-        self._model.fit(x, y, verbose=0) # TODO: INCLUDE BATCH SIZE AND EPOCHS AGAIN
+        self._model.fit(x, y, batch_size=self._config.batch_size, epochs=self._config.epochs, verbose=0) # TODO: INCLUDE BATCH SIZE AND EPOCHS AGAIN
 
     def predict(self, x):
         return self._model.predict(x)
