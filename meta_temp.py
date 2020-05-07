@@ -301,7 +301,16 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Create Exo-Ada
     ds = find_datashape(config, hyplist, hyperparameter_dict)
     create_base_estimator_fn = lambda: cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
-    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=5, steps=5, fold=2) # TODO: 2,2,2 are temp values
+    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=2, steps=2, fold=2) # TODO: 2,2,2 are temp values
+    
+    # TODO: Try initializing sample weights depending on their dataset size. So if dataset A is 27% of total train dataset, then it gets 0.27 points to play with.
+    # NORMAL CODE IS HERE, MODIFY IT: 
+    # Probably calculate percentage length, then just put in instead of 1
+    # Initialize weights to 1 / n_samples
+    # sample_weights = np.empty(X.shape[0], dtype=np.float64)
+    # sample_weights[:] = 1. / X.shape[0]
+
+
     regressor.fit(sliced_X_train, sliced_Y_train)
 
     # Plot sample_weights for the datasets across time

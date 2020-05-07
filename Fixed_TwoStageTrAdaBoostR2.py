@@ -167,7 +167,7 @@ class TwoStageTrAdaBoostR2:
         for s in range(self.steps):
             model = Ada.AdaBoostR2(self.create_base_estimator_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
             model.fit(X, y, sample_weights)
-            self.sample_weights_.append(sample_weights)
+            self.sample_weights_.append(np.copy(sample_weights))
             self.models_.append(model)
 
             error = self.Step1(sample_weights, X_source, y_source, X_target, y_target)
