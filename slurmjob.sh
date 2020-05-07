@@ -10,10 +10,7 @@
 
 #srun singularity pull docker://nvcr.io/nvidia/tensorflow:20.02-tf1-py3
 
-# pip install --no-cache-dir -r requirements.txt
-# && are cursed characters
+#srun singularity exec --nv tensorflow_20.02-tf1-py3.sif pip install --no-cache-dir -r requirements.txt
 srun singularity exec --nv tensorflow_20.02-tf1-py3.sif python P10-ExoskeletonTransferLearning/meta_temp.py
 
-# something is going wrong here. My python version is somehow wrong, even though it says it has the correct one whilst executing on my container.
-
-
+# && are cursed characters

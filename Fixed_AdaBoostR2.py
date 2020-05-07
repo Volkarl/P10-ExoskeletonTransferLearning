@@ -36,16 +36,18 @@ class AdaBoostR2:
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.random_state = random_state
-        
-    def check_parameters(self, X):
-        if self.learning_rate <= 0:
+    
+    @staticmethod
+    def check_parameters(X, learning_rate, sample_size):
+        if learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
-        if self.sample_size is None:
+        if sample_size is None:
             raise ValueError("Additional input required: sample size of source and target is missing")
-        elif np.array(self.sample_size).sum() != X.shape[0]:
+        elif np.array(sample_size).sum() != X.shape[0]:
             raise ValueError("Input error: the specified sample size does not equal to the input size")
 
-    def init_weights(self, sample_weights, X):
+    @staticmethod
+    def init_weights(sample_weights, X):
         if sample_weights is None:
             # Initialize weights to 1 / n_samples
             sample_weights = np.empty(X.shape[0], dtype=np.float64)
@@ -83,7 +85,8 @@ class AdaBoostR2:
 
     def step_2(self, estimator, X, Y):
         y_predict = estimator.predict(X)
-        error_vect = np.array([np.abs(y[0] - y_truth[0]) for y, y_truth in zip(y_predict, Y)])
+        y_predict = np.concatenate(y_predict, axis=0) # Flatten inner list
+        error_vect = np.array([np.abs(y - y_truth) for y, y_truth in zip(y_predict, Y)])
         error_max = error_vect.max()
 
         if error_max != 0.:
@@ -157,7 +160,7 @@ class AdaBoostR2:
         return sample_weights, estimator_weight, estimator_error
 
     def fit(self, X, y, sample_weights=None):
-        self.check_parameters(X)
+        self.check_parameters(X, self.learning_rate, self.sample_size)
         sample_weights = self.init_weights(sample_weights, X)
         self.clear_results()
 

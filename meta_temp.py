@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2
 from plotting_experiments import plotstuff, make_simple_comparison_plot
-
+from Fixed_TwoStageTrAdaBoostR2 import TwoStageTrAdaBoostR2 as ExoAda
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
 import data_manager_component as data
@@ -25,7 +25,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline5(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline6(config, hyplist, hyperparameter_dict)
         #loss = run_cnn(config, hyplist, hyperparameter_dict)
         #loss = run_ensemble(config, hyplist, hyperparameter_dict)
         #loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
@@ -185,24 +185,6 @@ def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperpar
     predictions = ada_model.predict(sliced_X)
     return ada_model.evaluate(predictions, sliced_Y)
 
-def run_TwoStageTrAdaBoost(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
-
-#    source_sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in train_ppl_file_iter]
- #   target_sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in test_ppl_file_iter]
-
-
-    #for idx, person in enumerate(train_ppl_file_iter):
-    #    print(f"PERSON {idx + 1} of {config.train_ppl_amount}")
-    #    sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
-    #   model.fit(idx, sessions)
-    # TODO dont quite know how we're going to do train, test, validation splits right now
-
-
-
-
-
-
 def run_Baseline1(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     # CNN on C only
     # Train set: 4/5th of person C
@@ -284,7 +266,7 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Create default tradaboost estimator
     regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=2, steps=2, fold=2) # TODO: 2,2,2 are temp values
     regressor.fit(sliced_X_train, sliced_Y_train)
-    # TODO PUT ESTIMATORS, STEPS AND FOLDS INTO SOME CLASS WHERE HYPEROPT CAN OPTIMIZE IT?
+    # TODO PUT ESTIMATORS, STEPS AND FOLDS INTO SOME CLASS WHERE HYPEROPT CAN OPTIMIZE IT? Nope, its not feasible. 
 
 
     # Evaluate
@@ -298,9 +280,35 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Exo-Ada
     # Train set: Source is person A + person B. Target is 4/5th of person C.
     # Test set: 1/5th of person C
+    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
 
-    return 0
+    sessions_source = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sessions_target = sessions_novel_person[:-1] # Leave the last session for the test set
+    sessions_test = sessions_novel_person[-1:]
 
+    sliced_X_source, sliced_Y_source = flatten_split_sessions(sessions_source)
+    sliced_X_target, sliced_Y_target = flatten_split_sessions(sessions_target)
+    sliced_X_train, sliced_Y_train = [], []
+    sliced_X_train.extend(sliced_X_source)
+    sliced_X_train.extend(sliced_X_target)
+    sliced_Y_train.extend(sliced_Y_source)
+    sliced_Y_train.extend(sliced_Y_target)
+    sliced_X_train = np.array(sliced_X_train)
+    sliced_Y_train = np.array(sliced_Y_train)
+    sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
+
+    # Create Exo-Ada
+    ds = find_datashape(config, hyplist, hyperparameter_dict)
+    create_base_estimator_fn = lambda: cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
+    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=2, steps=2, fold=2) # TODO: 2,2,2 are temp values
+    regressor.fit(sliced_X_train, sliced_Y_train)
+
+    # Evaluate
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_test) # Test only on the last session from the target person
+    sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
+    prediction = regressor.predict(sliced_X_test)
+    return mean_absolute_error(sliced_Y_test, prediction)
 
 
 def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
