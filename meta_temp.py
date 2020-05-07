@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
 
 from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2
-from plotting_experiments import plotstuff, make_simple_comparison_plot
+from plotting_experiments import plotstuff, make_simple_comparison_plot, weights_across_time
 from Fixed_TwoStageTrAdaBoostR2 import TwoStageTrAdaBoostR2 as ExoAda
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
@@ -287,13 +287,13 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sessions_target = sessions_novel_person[:-1] # Leave the last session for the test set
     sessions_test = sessions_novel_person[-1:]
 
-    sliced_X_source, sliced_Y_source = flatten_split_sessions(sessions_source)
-    sliced_X_target, sliced_Y_target = flatten_split_sessions(sessions_target)
+    sliced_X_source_A, sliced_Y_source_A = flatten_split_sessions(sessions_source[:5])
+    sliced_X_source_B, sliced_Y_source_B = flatten_split_sessions(sessions_source[5:])
+    sliced_X_target_C, sliced_Y_target_C = flatten_split_sessions(sessions_target)
+
     sliced_X_train, sliced_Y_train = [], []
-    sliced_X_train.extend(sliced_X_source)
-    sliced_X_train.extend(sliced_X_target)
-    sliced_Y_train.extend(sliced_Y_source)
-    sliced_Y_train.extend(sliced_Y_target)
+    for lst in [sliced_X_source_A, sliced_X_source_B, sliced_X_target_C] : sliced_X_train.extend(lst)
+    for lst in [sliced_Y_source_A, sliced_Y_source_B, sliced_Y_target_C] : sliced_Y_train.extend(lst)
     sliced_X_train = np.array(sliced_X_train)
     sliced_Y_train = np.array(sliced_Y_train)
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
@@ -301,8 +301,11 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Create Exo-Ada
     ds = find_datashape(config, hyplist, hyperparameter_dict)
     create_base_estimator_fn = lambda: cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
-    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=2, steps=2, fold=2) # TODO: 2,2,2 are temp values
+    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=5, steps=5, fold=2) # TODO: 2,2,2 are temp values
     regressor.fit(sliced_X_train, sliced_Y_train)
+
+    # Plot sample_weights for the datasets across time
+    weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C))
 
     # Evaluate
     sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_test) # Test only on the last session from the target person

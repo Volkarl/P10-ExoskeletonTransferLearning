@@ -15,6 +15,25 @@ def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_na
     plt.legend()
     plt.show()
 
+def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C):
+    y_A, y_B, y_C = [], [], []
+    for sample_weights in sample_weights_across_steps:
+        sw_A, sw_B, sw_C = sample_weights[:len_A], sample_weights[len_A:len_A+len_B], sample_weights[len_A+len_B:]
+        y_A.append(np.sum(sw_A))
+        y_B.append(np.sum(sw_B))
+        y_C.append(np.sum(sw_C))
+
+    plt.figure()
+    plt.plot(y_A, c="b", label=f"Dataset A (samples {len_A}, sum {np.sum(y_A)})", linewidth=2)
+    plt.plot(y_B, c="r", label=f"Dataset B (samples {len_B}, sum {np.sum(y_B)})", linewidth=2)
+    plt.plot(y_C, c="y", label=f"Dataset C (samples {len_C}, sum {np.sum(y_C)})", linewidth=2)
+    plt.xlabel("Boosting Step")
+    plt.ylabel("Total Dataset Weight")
+    plt.title("Distribution of Sample Weights Over Boosting Iterations")
+    plt.legend()
+    plt.show()
+    print("BREAKPOINT HERE")
+
 def unpack_sessions_no_slice(person_iterator, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     session_features, session_truths = [], []
     for person in person_iterator:

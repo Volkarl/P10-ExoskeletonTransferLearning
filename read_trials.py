@@ -21,7 +21,7 @@ plt.title('Use_dilation (1 is true, 0 is false)')
 
 #plt.plot(loss)
 plt.plot(pd.DataFrame(loss).ewm(span=1).mean())
-plt.title('MSE')
+plt.title('MAE')
 
 #plt.plot(ref, 'g^')
 #plt.legend()
