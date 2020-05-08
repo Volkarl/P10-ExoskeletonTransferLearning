@@ -64,7 +64,7 @@ class configuration:
         self.dataset_file_paths = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE"] # Now obsolete
         self.dataset_sheet_titles = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE"]
         self.attempt_name = "attempt_name"
-        self.granularity = 10
+        self.granularity = 30
         self.step_size_sliding_window = 1
         self.future_target = 1
         self.epochs = 10

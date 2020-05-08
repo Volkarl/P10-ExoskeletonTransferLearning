@@ -55,7 +55,6 @@ class AdaBoostR2:
         else:
             # Normalize existing weights
             sample_weights = sample_weights / sample_weights.sum(dtype=np.float64)
-            # TODO Shouldn't sample-weights be normalized to ensure that the total weights is always 1? That's not what the code does, unless I am stupid.
 
             # Check that the sample weights sum is positive
             if sample_weights.sum() <= 0:

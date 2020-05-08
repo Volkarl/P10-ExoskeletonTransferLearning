@@ -31,7 +31,8 @@ class TwoStageTrAdaBoostR2:
                  steps = 10,
                  fold = 5,
                  learning_rate = 1.,
-                 random_state = np.random.mtrand._rand):
+                 random_state = np.random.mtrand._rand,
+                 start_steps = 0):
         self.create_base_estimator_fn = create_base_estimator_fn
         self.sample_size = sample_size
         self.n_estimators = n_estimators
@@ -39,6 +40,8 @@ class TwoStageTrAdaBoostR2:
         self.fold = fold
         self.learning_rate = learning_rate
         self.random_state = random_state
+
+        self.start_steps = start_steps
 
     def Step1(self, sample_weights, X_source, y_source, X_target, y_target):
         # Call AdaBoostR2, except dont allow it to change its source values
@@ -98,7 +101,10 @@ class TwoStageTrAdaBoostR2:
         # calculate the specified sum of weight for the target data
         n_target = self.sample_size[-1]
         n_source = np.array(self.sample_size).sum() - n_target
-        theoretical_sum = n_target/(n_source+n_target) + istep/(self.steps-1)*(1-n_target/(n_source+n_target))
+        theoretical_sum = n_target/(n_source+n_target) + istep/(self.steps-1)*(1-n_target/(n_source+n_target)) 
+        # The theoretical sum can be written as basically: percent_of_dataset_that_is_target + how_far_we_are_through_total_boosting_steps * percent_of_dataset_that_is_NOT_target
+        # This value increases as we get further through out total boosting steps
+
         # for the last iteration step, beta is 0.
         if istep == self.steps - 1:
             beta = 0.
@@ -108,9 +114,7 @@ class TwoStageTrAdaBoostR2:
         R = 1.
         beta = (L+R)/2
         sample_weight_ = deepcopy(sample_weight)
-        sample_weight_[:-n_target] *= np.power(
-                    beta,
-                    (error_vect[:-n_target]) * self.learning_rate)
+        sample_weight_[:-n_target] *= np.power(beta, (error_vect[:-n_target]) * self.learning_rate)
         sample_weight_ /= np.sum(sample_weight_, dtype=np.float64)
         updated_weight_sum = np.sum(sample_weight_[-n_target:], dtype=np.float64)
 
@@ -154,6 +158,21 @@ class TwoStageTrAdaBoostR2:
         self.errors_ = []
         self.sample_weights_ = []
 
+    def adjust_source_weights(self, sample_weights, X, y, X_source, y_source, X_target, y_target):
+        # This function is to ensure that the algorithm gets some time to shuffle weights around in our multiple source domains and attempts to find which ones are most similar to target
+        # Before we run the "real" two-stage tradaboost and starts scaling up the importance of the target domain, whilst scaling down the importance of the source domain
+        model = Ada.AdaBoostR2(self.create_base_estimator_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
+        model.fit(X, y, sample_weights)
+        self.sample_weights_.append(np.copy(sample_weights)) # We do add this one to the list, purely for debugging purposes
+        # self.models_.append(model) 
+        # error = self.Step1(sample_weights, X_source, y_source, X_target, y_target)
+        # self.errors_.append(error)
+        # We dont append the model nor the error, we let traditional two-stage tradaboost handle it, since this function is just to ensure our start sample_weights are in a good place
+
+        # Note that we don't increase step size, causing the beta value to not change either, meaning that our source vs target weight distributions won't be altered
+        sample_weights = self.perform_second_stage_boost(0, X, y, sample_weights)
+
+
     def fit(self, X, y, sample_weights=None):
         Ada.AdaBoostR2.check_parameters(X, self.learning_rate, self.sample_size)
         sample_weights = Ada.AdaBoostR2.init_weights(sample_weights, X)
@@ -163,6 +182,11 @@ class TwoStageTrAdaBoostR2:
         y_source = y[:-self.sample_size[-1]]
         X_target = X[-self.sample_size[-1]:]
         y_target = y[-self.sample_size[-1]:]
+
+        for _ in range(self.start_steps):
+            # This function is added by us, to help performance in the case where you are using multiple source domains, rather than one - which is what twostagetradaboost 
+            # was designed for. It should only ever be run if learning from multiple source domains to one target domain
+            self.adjust_source_weights(sample_weights, X, y, X_source, y_source, X_target, y_target)
 
         for s in range(self.steps):
             model = Ada.AdaBoostR2(self.create_base_estimator_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
