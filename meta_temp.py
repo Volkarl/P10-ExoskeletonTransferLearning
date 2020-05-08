@@ -301,17 +301,17 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Create Exo-Ada
     ds = find_datashape(config, hyplist, hyperparameter_dict)
     create_base_estimator_fn = lambda: cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
-    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=2, steps=2, fold=2) # TODO: 2,2,2 are temp values
+    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=5, steps=5, fold=2) # TODO: 2,2,2 are temp values
     
-    # TODO: Try initializing sample weights depending on their dataset size. So if dataset A is 27% of total train dataset, then it gets 0.27 points to play with.
-    # NORMAL CODE IS HERE, MODIFY IT: 
-    # Probably calculate percentage length, then just put in instead of 1
-    # Initialize weights to 1 / n_samples
-    # sample_weights = np.empty(X.shape[0], dtype=np.float64)
-    # sample_weights[:] = 1. / X.shape[0]
+    # Initializing weights such that each dataset has a percentage to 1 / n_samples
+    sample_weights = np.empty(len(sliced_X_train), dtype=np.float64)
+    len_A, len_B, len_C = len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C)
+    weight_per_dataset = 1. / 3
+    sample_weights[:len_A] = weight_per_dataset / len_A
+    sample_weights[len_A:len_A+len_B] = weight_per_dataset / len_B
+    sample_weights[len_A+len_B:len_A+len_B+len_C] = weight_per_dataset / len_C
 
-
-    regressor.fit(sliced_X_train, sliced_Y_train)
+    regressor.fit(sliced_X_train, sliced_Y_train, sample_weights)
 
     # Plot sample_weights for the datasets across time
     weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C))
@@ -321,7 +321,6 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
     prediction = regressor.predict(sliced_X_test)
     return mean_absolute_error(sliced_Y_test, prediction)
-
 
 def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     plotstuff(config, hyplist, hyperparameter_dict, flatten_split_sessions)
