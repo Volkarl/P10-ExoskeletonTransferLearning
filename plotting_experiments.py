@@ -15,6 +15,25 @@ def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_na
     plt.legend()
     plt.show()
 
+def stacked_histogram(stacked_hist_values, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'w', 'purple', 'crimson']):
+    colors = colors[:stacked_hist_values.shape[1]] # Shortens the color array, if it's longer than how many values we have to stack for each column of our histogram
+    #X = range(1, stacked_hist_values.shape[0] + 1) TODO FIX RANGE WEIGHTS ACROSS TIME AS WELL
+    X = range(stacked_hist_values.shape[0])
+
+    #plt.hist(X, stacked_hist_values, color=colors, density=True, histtype='bar', stacked=True) # , normed=1, alpha=0.5, 
+    # We use the manual way of stacking bar plots to create a histogram, because I couldn't get the conventional way working (see previous line)
+    bottom_vals = np.zeros(stacked_hist_values.shape[0])
+    for stack in range(stacked_hist_values.shape[1]):
+        weights = stacked_hist_values[:,stack]
+        plt.bar(X, weights, alpha=0.5, color = colors[stack], bottom = bottom_vals)
+        for idx, w in enumerate(weights):
+            bottom_vals[idx] += w
+
+    plt.xlabel("Ensemble Models")
+    plt.ylabel("Estimator Weight")
+    plt.show()
+    print("stop")
+
 def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C):
     y_A, y_B, y_C = [], [], []
     for sample_weights in sample_weights_across_steps:
@@ -43,7 +62,7 @@ def unpack_sessions_no_slice(person_iterator, config: configuration, hyplist: hy
             session_truths.append(truths.values)
     return session_features, session_truths
 
-def plotstuff(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, flatten_split_sessions):
+def plot_dataset_comparison(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, flatten_split_sessions):
     hyperparameter_dict[hyplist.use_ref_points] = False
     hyperparameter_dict[hyplist.smoothing] = 50
 

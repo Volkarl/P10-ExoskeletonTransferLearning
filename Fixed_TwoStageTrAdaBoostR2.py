@@ -237,5 +237,6 @@ class TwoStageTrAdaBoostR2:
     def get_estimator_info(self):
         min_error_idx = np.array(self.errors_).argmin()
         best_ensemble_weights = self.models_[min_error_idx].estimator_weights_
-        return self.errors_, min_error_idx, best_ensemble_weights
+        ensemble_weights = [model.estimator_weights_ for model in self.models_]
+        return self.errors_, min_error_idx, best_ensemble_weights, ensemble_weights
         
