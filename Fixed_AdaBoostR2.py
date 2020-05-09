@@ -16,10 +16,7 @@ Notes:
 Step (5) is different when we use it for Two-StageTrAdaBoost.R2. Here, we never change the percentwise value of the source weights, though we do keep adjusting the target weights
 """
 
-# TODO Wrap my CNN stuff with the SKLearn wrapper function, KerasRegressor 
-
 import numpy as np
-#from copy import deepcopy
 import tensorflow as tf
 from sklearn.metrics import mean_absolute_error
 
