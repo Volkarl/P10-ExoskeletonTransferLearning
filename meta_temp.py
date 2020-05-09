@@ -30,6 +30,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
         #loss = run_ensemble(config, hyplist, hyperparameter_dict)
         #loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
         #loss = run_wrapper(config, hyplist, hyperparameter_dict)
+        print(loss)
         return { "loss": loss, 
                  "status": STATUS_OK }
     except Exception as e:
@@ -301,7 +302,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Create Exo-Ada
     ds = find_datashape(config, hyplist, hyperparameter_dict)
     create_base_estimator_fn = lambda: cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
-    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=4, steps=5, fold=2, start_steps=0) # TODO: 2,2,2 are temp values
+    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=2, steps=2, fold=2, start_steps=0) # TODO: 2,2,2 are temp values
     
     # Initializing weights such that each dataset has a percentage to 1 / n_samples
     sample_weights = np.empty(len(sliced_X_train), dtype=np.float64)

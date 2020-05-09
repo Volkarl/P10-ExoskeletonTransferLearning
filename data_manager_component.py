@@ -43,6 +43,15 @@ def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyp
     batch_train, batch_val, batch_test = batch_data(x_train, y_train, x_val, y_val, x_test, y_test, config.batch_size, 
                                                     config.epochs, hyperparameter_dict[hyplist.shuffle_buffer_size])
 
+    sbs = hyperparameter_dict[hyplist.shuffle_buffer_size] # TODO: ON 30 GRANULARITY TESTS THIS SEEMS TO HURT ACCURACY. Maybe try to see if it can improve it on higher. 
+    if sbs != 0:
+        x_train = shuffle_buffer_manual(x_train, sbs)
+        y_train = shuffle_buffer_manual(y_train, sbs)
+        x_val = shuffle_buffer_manual(x_val, sbs)
+        y_val = shuffle_buffer_manual(y_val, sbs)
+        x_test = shuffle_buffer_manual(x_test, sbs)
+        y_test = shuffle_buffer_manual(y_test, sbs)
+
     #return batched_data(datashape, batch_train, batch_val, batch_test, len(x_train), len(x_val), len(x_test))
     return batched_data(datashape, batch_train, batch_val, batch_test, len(x_train), len(x_val), len(x_test), x_train, y_train, x_val, y_val, x_test, y_test)
 
@@ -57,14 +66,17 @@ def batch_data(x_train, y_train, x_val, y_val, x_test, y_test, batch_size, epoch
     batched_test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(batch_size)
     return batched_train_data, batched_val_data, batched_test_data
 
-#def shuffle_buffer_manual(dataset, buffer_size):
-#    buffer = dataset[0:buffer_size]
-#    shuffled_dataset = []
-#    for i in len(dataset) - buffer_size:
-#        rand_index = rand(buffer)
-#        shuffled_dataset.append(buffer[rand_index])
-#        buffer.remove(rand_index)
-#        buffer.append(dataset[i])
+def shuffle_buffer_manual(dataset, shuffle_buffer_size):
+    buffer = dataset[:shuffle_buffer_size] # fill up buffer
+    dataset = dataset[shuffle_buffer_size:] # remove those elements in buffer from the dataset
+
+    shuffled_dataset = []
+    for i in range(len(dataset)):
+        rand_index = np.random.randint(0, shuffle_buffer_size)
+        shuffled_dataset.append(buffer[rand_index])
+        buffer[rand_index] = dataset[i]
+    shuffled_dataset.extend(buffer)
+    return shuffled_dataset
 
 def slice_data(indexes, features, ground_truth, datasplit, past_history, config: configuration):
     (train_start, val_start, test_start) = datasplit

@@ -41,7 +41,6 @@ def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 
 # er = np.array([0.2,0.22,0.23,0.21,0.24])
 # stacked_histogram(ar, er)
 
-
 def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C):
     y_A, y_B, y_C = [], [], []
     for sample_weights in sample_weights_across_steps:
