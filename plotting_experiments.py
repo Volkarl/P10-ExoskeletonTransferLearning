@@ -15,24 +15,32 @@ def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_na
     plt.legend()
     plt.show()
 
-def stacked_histogram(stacked_hist_values, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'w', 'purple', 'crimson']):
+def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'w', 'purple', 'crimson']):
     colors = colors[:stacked_hist_values.shape[1]] # Shortens the color array, if it's longer than how many values we have to stack for each column of our histogram
-    #X = range(1, stacked_hist_values.shape[0] + 1) TODO FIX RANGE WEIGHTS ACROSS TIME AS WELL
     X = range(stacked_hist_values.shape[0])
+    accuracies = [1 - er for er in errors]
 
-    #plt.hist(X, stacked_hist_values, color=colors, density=True, histtype='bar', stacked=True) # , normed=1, alpha=0.5, 
+    # plt.hist(X, stacked_hist_values, color=colors, density=True, histtype='bar', stacked=True) # , normed=1, alpha=0.5, 
     # We use the manual way of stacking bar plots to create a histogram, because I couldn't get the conventional way working (see previous line)
     bottom_vals = np.zeros(stacked_hist_values.shape[0])
+    w_totals = np.sum(stacked_hist_values, axis = 1) # Find the sum for each of the ensemble models
+
     for stack in range(stacked_hist_values.shape[1]):
         weights = stacked_hist_values[:,stack]
-        plt.bar(X, weights, alpha=0.5, color = colors[stack], bottom = bottom_vals)
+        weights = [(w / w_totals[idx]) * accuracies[idx] for idx, w in enumerate(weights)] # Calculate the percentage of how much each estimator/weaklearner contributes to the accuracy
+        plt.bar(X, weights, color = colors[stack], alpha = 0.5, bottom = bottom_vals)
         for idx, w in enumerate(weights):
             bottom_vals[idx] += w
 
     plt.xlabel("Ensemble Models")
-    plt.ylabel("Estimator Weight")
+    plt.ylabel("WeakLearner Weight Distribution") # So basically this is how much each weaklearner contributes to the accuracy
     plt.show()
     print("stop")
+
+# ar = np.array([[2,0.5,1.8,0.2],[0.2,2,0.2,1.5],[0.5,2,1.5,2],[2,0.7,0.2,1.5],[1.5,2,0.2,2]])
+# er = np.array([0.2,0.22,0.23,0.21,0.24])
+# stacked_histogram(ar, er)
+
 
 def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C):
     y_A, y_B, y_C = [], [], []

@@ -320,7 +320,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     print(f"Errors {errors}")
     print(f"Best idx {idx}")
     print(f"Weights of best estimator {bew}")
-    stacked_histogram(np.array(ew))
+    stacked_histogram(np.array(ew), np.array(errors))
 
     # Evaluate
     sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_test) # Test only on the last session from the target person
