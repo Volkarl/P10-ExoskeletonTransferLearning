@@ -26,6 +26,13 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
         loss = run_Baseline6(config, hyplist, hyperparameter_dict)
+        
+        #loss_lst = []
+        #for _ in range(10): loss_lst.append(run_Baseline2(config, hyplist, hyperparameter_dict))
+        #print(f"Losses {loss_lst}")
+        #print(f"Mean {np.mean(loss_lst)}")
+        #loss = np.mean(loss_lst)
+
         #loss = run_cnn(config, hyplist, hyperparameter_dict)
         #loss = run_ensemble(config, hyplist, hyperparameter_dict)
         #loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
@@ -315,20 +322,20 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     regressor.fit(sliced_X_train, sliced_Y_train, sample_weights)
 
     # Plot sample_weights for the datasets across time
-    weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C))
+    weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C), False, "baseline6")
 
     errors, idx, bew, ew = regressor.get_estimator_info()
     print(f"Errors {errors}")
     print(f"Best idx {idx}")
     print(f"Weights of best estimator {bew}")
-    stacked_histogram(np.array(ew), np.array(errors))
+    stacked_histogram(np.array(ew), np.array(errors), do_savefig=False, savename="baseline6")
 
     # Evaluate
     sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_test) # Test only on the last session from the target person
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
     prediction = regressor.predict(sliced_X_test)
     
-    make_simple_comparison_plot(sliced_Y_test, "target_test", prediction, "Exo-Ada", "x", "y", "Exo-Ada Predictions")
+    make_simple_comparison_plot(sliced_Y_test, "target_test", prediction, "Exo-Ada", "x", "y", "Exo-Ada Predictions", False, "baseline6")
     return mean_absolute_error(sliced_Y_test, prediction)
 
 def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):

@@ -5,7 +5,7 @@ from config_classes import hyperparameter_list, configuration
 import numpy as np
 from data_manager_component import process_sheet_no_slice
 
-def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_name, title):
+def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_name, title, do_savefig = False, savename = None):
     plt.figure()
     plt.plot(y1, c="b", label=y1_name, linewidth=0.5)
     plt.plot(y2, c="r", label=y2_name, linewidth=2)
@@ -13,9 +13,10 @@ def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_na
     plt.ylabel(y_axis_name)
     plt.title(title)
     plt.legend()
-    plt.show()
+    if do_savefig: plt.savefig(f'comp_{savename}.png')
+    else: plt.show()
 
-def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'w', 'purple', 'crimson']):
+def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'w', 'purple', 'crimson'], do_savefig = False, savename = None):
     colors = colors[:stacked_hist_values.shape[1]] # Shortens the color array, if it's longer than how many values we have to stack for each column of our histogram
     X = range(stacked_hist_values.shape[0])
     accuracies = [1 - er for er in errors]
@@ -34,14 +35,17 @@ def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 
 
     plt.xlabel("Ensemble Models")
     plt.ylabel("WeakLearner Weight Distribution") # So basically this is how much each weaklearner contributes to the accuracy
-    plt.show()
+    
+    if do_savefig: plt.savefig(f'sh_{savename}.png')
+    else: plt.show()
+
     print("stop")
 
 # ar = np.array([[2,0.5,1.8,0.2],[0.2,2,0.2,1.5],[0.5,2,1.5,2],[2,0.7,0.2,1.5],[1.5,2,0.2,2]])
 # er = np.array([0.2,0.22,0.23,0.21,0.24])
 # stacked_histogram(ar, er)
 
-def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C):
+def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C, do_savefig = False, savename = None):
     y_A, y_B, y_C = [], [], []
     for sample_weights in sample_weights_across_steps:
         sw_A, sw_B, sw_C = sample_weights[:len_A], sample_weights[len_A:len_A+len_B], sample_weights[len_A+len_B:]
@@ -57,7 +61,9 @@ def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C):
     plt.ylabel("Total Dataset Weight")
     plt.title("Distribution of Sample Weights Over Boosting Iterations")
     plt.legend()
-    plt.show()
+
+    if do_savefig: plt.savefig(f'wat_{savename}.png')
+    else: plt.show()
     print("BREAKPOINT HERE")
 
 def unpack_sessions_no_slice(person_iterator, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):

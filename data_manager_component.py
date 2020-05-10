@@ -43,7 +43,7 @@ def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyp
     batch_train, batch_val, batch_test = batch_data(x_train, y_train, x_val, y_val, x_test, y_test, config.batch_size, 
                                                     config.epochs, hyperparameter_dict[hyplist.shuffle_buffer_size])
 
-    sbs = hyperparameter_dict[hyplist.shuffle_buffer_size] # TODO: ON 30 GRANULARITY TESTS THIS SEEMS TO HURT ACCURACY. Maybe try to see if it can improve it on higher. 
+    sbs = hyperparameter_dict[hyplist.shuffle_buffer_size]
     if sbs != 0:
         x_train = shuffle_buffer_manual(x_train, sbs)
         y_train = shuffle_buffer_manual(y_train, sbs)
