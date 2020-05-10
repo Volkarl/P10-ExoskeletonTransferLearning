@@ -25,10 +25,10 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline6(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline2(config, hyplist, hyperparameter_dict)
         
         #loss_lst = []
-        #for _ in range(10): loss_lst.append(run_Baseline2(config, hyplist, hyperparameter_dict))
+        #for _ in range(10): loss_lst.append(run_Baseline1(config, hyplist, hyperparameter_dict))
         #print(f"Losses {loss_lst}")
         #print(f"Mean {np.mean(loss_lst)}")
         #loss = np.mean(loss_lst)
@@ -53,7 +53,7 @@ def run_wrapper(config: configuration, hyplist: hyperparameter_list, hyperparame
 
     #Train
     sessions_source = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict) # TODO UNPACK LAST FIFTH OF THIS ONE WITHOUT SHUFFLING
     sessions_target = sessions_novel_person[0:-1] # Leave the last session for the test set
     
     sliced_X_train_source, sliced_Y_train_source = flatten_split_sessions(sessions_source)
@@ -87,45 +87,9 @@ def setup_windows_linux_pathing():
     gitdir = "P10-ExoskeletonTransferLearning"
     if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
 
-def run_cnn(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
-    # TODO Need to fix this one to work with multiple people with multiple sessions, such that I dont just assume that one person = 1 sheet
-
-    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
-    #sessions_source = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    #sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    #sessions_target = sessions_novel_person[0:-1] # Leave the last session for the test set
-    # TODO should probably change such that we test on only one sheet of the last person, to achieve parity with the other baselines
-
-    model = cnn.Model_CNN(find_datashape(config, hyplist, hyperparameter_dict), config, hyplist, hyperparameter_dict)
-    for person in train_ppl_file_iter:
-        for (path, sheet) in person:
-            session = data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
-            model.fit(session.train, session.val, session.train_slices, session.val_slices)
-    
-    sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    session_train = sessions_novel_person[0:-1]
-    session_test = sessions_novel_person[-1:]
-    for session in session_train:
-        model.fit(session.train, session.val, session.train_slices, session.val_slices)
-    
-    loss_lst = []
-    for session in session_test:
-        loss_lst.append(model.evaluate(session.test))
-
-    #loss_lst = []
-    #for person in test_ppl_file_iter:
-    #    for (path, sheet) in person:
-    #        session = data.process_sheet(path, sheet, config.cnn_testsplit, config, hyplist, hyperparameter_dict)
-    #        loss_lst.append(model.evaluate(session.test))
-
-    del model # Remove all references from the model, such that the garbage collector claims it
-    clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
-    return np.mean(loss_lst)
-
 def find_datashape(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     # We load the first sheet as a test-run to see which datashape it ends up with
-    first_path, first_sheet = config.dataset_file_paths[0], config.dataset_sheet_titles[0]
-    person = data.process_sheet(first_path, first_sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict)
+    person = data.process_sheet(config.dataset_sheet_titles[0], config, hyplist, hyperparameter_dict, False)
     return person.datashape
 
 def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
@@ -134,12 +98,12 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
 
     for idx, person in enumerate(train_ppl_file_iter):
         print(f"PERSON {idx + 1} of {config.train_ppl_amount}")
-        sessions = [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
+        sessions = [data.process_sheet(sheet, config, hyplist, hyperparameter_dict) for sheet in person]
         model.fit(idx, sessions)
 
     loss = 0
     for idx, person in enumerate(test_ppl_file_iter):
-        sessions = [data.process_sheet(path, sheet, config.cnn_testsplit, config, hyplist, hyperparameter_dict) for path, sheet in person]
+        sessions = [data.process_sheet(sheet, config, hyplist, hyperparameter_dict) for sheet in person]
         loss = model.evaluate(sessions)
 
     del model # Remove all references from the model, such that the garbage collector claims it
@@ -150,21 +114,12 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
 def flatten_split_sessions(sessions):
     sliced_X, sliced_Y = [], []
     for session in sessions: # Flatten the outer lists
-        # Seperate the sensor values (x) from the ground truth values (y)
-        sliced_X.extend(session.x_train)
-        sliced_X.extend(session.x_val)
-        sliced_Y.extend(session.y_train)
-        sliced_Y.extend(session.y_val)
-
-        # TODO: BE AWARE THAT WE CURRENTLY IGNORE BATCHSIZE, EPOCHS, SHUFFLEBUFFERSIZE
+        sliced_X.extend(session.x)
+        sliced_Y.extend(session.y)
     return np.array(sliced_X), np.array(sliced_Y) # make into numpy arrays, such that we have a shape property
 
-def unpack_sessions(person_iterator, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    sessions = []
-    for person in person_iterator:
-        for session in [data.process_sheet(path, sheet, config.cnn_datasplit, config, hyplist, hyperparameter_dict) for path, sheet in person]:
-            sessions.append(session)
-    return sessions
+def unpack_sessions(files, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, allow_shuffle):
+    return [data.process_sheet(sheet, config, hyplist, hyperparameter_dict, allow_shuffle) for sheet in files]
 
 def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
@@ -188,7 +143,7 @@ def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperpar
     del sliced_X, sliced_Y, sessions # Remove from memory
 
     # TESTING
-    sessions = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
+    sessions = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict, False)
     sliced_X, sliced_Y = flatten_split_sessions(sessions)
     predictions = ada_model.predict(sliced_X)
     return ada_model.evaluate(predictions, sliced_Y)
@@ -197,15 +152,17 @@ def run_Baseline1(config: configuration, hyplist: hyperparameter_list, hyperpara
     # CNN on C only
     # Train set: 4/5th of person C
     # Test set: 1/5th of person C
-    _, test_ppl_file_iter = config.get_people_iterators()
+    people = config.get_people_iterator()
+    train_files = people[2][:4]
+    test_files = people[2][4:]
 
-    sessions = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    sliced_X_train, sliced_Y_train = flatten_split_sessions(sessions[:4])
-    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions[4:])
+    train_sessions = unpack_sessions(train_files, config, hyplist, hyperparameter_dict, True)
+    sliced_X_train, sliced_Y_train = flatten_split_sessions(train_sessions)
+    test_sessions = unpack_sessions(test_files, config, hyplist, hyperparameter_dict, False)
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(test_sessions)
 
-    ds = find_datashape(config, hyplist, hyperparameter_dict)
-    model = cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
-    model.fit_ada(sliced_X_train, sliced_Y_train) ### TODO: INCLUDE BATCHSIZE EPOCHS AND SHUFFLEBUFFLE
+    model = cnn.Model_CNN(train_sessions[0].datashape, config, hyplist, hyperparameter_dict)
+    model.fit_ada(sliced_X_train, sliced_Y_train)
     return model.evaluate_nonbatched(sliced_X_test, sliced_Y_test)
 
 def run_Baseline2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
@@ -213,17 +170,20 @@ def run_Baseline2(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Train set: person A, B and 4/5ths of C
     # Test set: 1/5th of person C
 
-    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
+    people = config.get_people_iterator()
+    train_files = people[0][:5]
+    train_files.extend(people[1][:5])
+    train_files.extend(people[2][:4])
+    test_files = people[2][4:]
 
-    sessions = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    sessions.extend(unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict))
-    sliced_X_train, sliced_Y_train = flatten_split_sessions(sessions[:-1])
-    
-    ds = find_datashape(config, hyplist, hyperparameter_dict)
-    model = cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
-    model.fit_ada(sliced_X_train, sliced_Y_train) ### TODO: INCLUDE BATCHSIZE EPOCHS AND SHUFFLEBUFFLE
+    train_sessions = unpack_sessions(train_files, config, hyplist, hyperparameter_dict, True)
+    sliced_X_train, sliced_Y_train = flatten_split_sessions(train_sessions)
 
-    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions[-1:])
+    model = cnn.Model_CNN(train_sessions[0].datashape, config, hyplist, hyperparameter_dict)
+    model.fit_ada(sliced_X_train, sliced_Y_train)
+
+    test_sessions = unpack_sessions(test_files, config, hyplist, hyperparameter_dict, False)
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(test_sessions)
     return model.evaluate_nonbatched(sliced_X_test, sliced_Y_test)
 
 def run_Baseline3(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
@@ -343,7 +303,7 @@ def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list
     return 0
 
 
-do_param_optimization = False
+do_param_optimization = True
 
 config = configuration()
 hyplist = hyperparameter_list()

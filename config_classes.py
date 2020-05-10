@@ -59,12 +59,9 @@ class hyperparameter_list:
 
 class configuration:
     def __init__(self): 
-        #OLD self.dataset_file_paths =   ["SingleSessionData",   "SingleSessionData",    "SingleSessionData",        "SingleSessionData",    "SingleSessionData",        "SessionToSessionOne",  "SessionToSessionOne",  "SessionToSessionOne",      "SessionToSessionOne",      "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionTwo",  "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionThree",    "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour", "SessionToSessionFour"]
-        #OLD self.dataset_sheet_titles = ["data_Uniform",        "data_NonUniform",      "data_NonUniformWithPause", "data_NonUniformTwo",   "data_UniformWithPause",    "data_Uniform",         "data_NonUniform",      "data_NonUniformWithPause", "data_UniformWithPause",    "data_Uniform",         "data_UniformTwo",      "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",             "data_UniformTwo",          "data_NonUniform",          "data_NonUniformTwo",       "data_NonUniform",      "data_NonUniformTwo",   "data_Uniform",         "data_UniformTwo"]
-        self.dataset_file_paths = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE"] # Now obsolete
         self.dataset_sheet_titles = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE"]
         self.attempt_name = "attempt_name"
-        self.granularity = 30
+        self.granularity = 10
         self.step_size_sliding_window = 1
         self.future_target = 1
         self.epochs = 10
@@ -75,21 +72,13 @@ class configuration:
         self.kernel_initializer = 'uniform'
         self.activation= 'relu'
         self.dilation_rate = 2
-        self.ada_datasplit = (0, 0.8, 0.9)
-        self.cnn_datasplit = (0, 0.9, 1) # Empty test set
-        self.cnn_testsplit = (0, 0, 0) # All values will be part of the test set
-        self.train_ppl_amount = 2
-        self.train_sheets_per_person = 5 
-        self.test_ppl_amount = 1
-        self.test_sheets_per_person = 5 
+        self.ppl_amount = 3
+        self.sheets_per_person = 5 
 
-    def get_people_iterators(self):
-        train_spp = self.train_sheets_per_person
-        train_sheets = self.train_ppl_amount * train_spp
-        test_spp = self.test_sheets_per_person
-        test_sheets = self.test_ppl_amount * test_spp
+    def get_people_iterator(self):
+        spp = self.sheets_per_person
+        sheets = self.ppl_amount * spp
 
-        train_people_files = [zip(self.dataset_file_paths[i:i+train_spp], self.dataset_sheet_titles[i:i+train_spp]) for i in range(0, train_sheets, train_spp)]
-        test_people_files = [zip(self.dataset_file_paths[i:i+test_spp], self.dataset_sheet_titles[i:i+test_spp]) for i in range(train_sheets, train_sheets + test_sheets, test_spp)]
+        people_files = [self.dataset_sheet_titles[i:i+spp] for i in range(0, sheets, spp)]
         # Note that this grabs the test sheets from right after our train sheets, not necessarily the last sheets
-        return train_people_files, test_people_files
+        return people_files

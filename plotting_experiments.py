@@ -69,8 +69,8 @@ def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C, do_sav
 def unpack_sessions_no_slice(person_iterator, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     session_features, session_truths = [], []
     for person in person_iterator:
-        for path, sheet in person:
-            features, truths = process_sheet_no_slice(path, sheet, config, hyplist, hyperparameter_dict)
+        for sheet in person:
+            features, truths = process_sheet_no_slice(sheet, config, hyplist, hyperparameter_dict)
             session_features.append(features.values)
             session_truths.append(truths.values)
     return session_features, session_truths

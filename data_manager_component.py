@@ -4,21 +4,11 @@ import tensorflow as tf
 from config_classes import hyperparameter_list, configuration
 
 class batched_data:
-    def __init__(self, datashape, batched_train_data, batched_val_data, batched_test_data, train_slices, val_slices, test_slices,    x_train, y_train, x_val, y_val, x_test, y_test):
+    def __init__(self, datashape, x, y, slices):
         self.datashape = datashape
-        self.train = batched_train_data
-        self.val = batched_val_data
-        self.test = batched_test_data
-        self.train_slices = train_slices
-        self.val_slices = val_slices
-        self.test_slices = test_slices
-
-        self.x_train = x_train # TODO THESE VALUES ARE A TEMPORARY SOLUTION, BECAUSE I DONT KNOW IF I SHOULD REMOVE BATCH_DATA OR NOT
-        self.y_train = y_train 
-        self.x_val = x_val 
-        self.y_val = y_val 
-        self.x_test = x_test 
-        self.y_test = y_test
+        self.x = x
+        self.y = y
+        self.slices = slices
 
 # Data layout in the xlsx files
 columns_data = ['1' ,'2', '3', '4', '5', '6', '7', '8', 'N/A_1', 'N/A_2', 'angle', 'time', 'session']
@@ -26,45 +16,26 @@ columns_features_considered = columns_data[:8]
 column_ground_truth = columns_data[10]
 # Each timestep represents 1 millisecond, 0.001 second. 
 
-def process_sheet_no_slice(sheet_path, sheet_title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    raw_data = load_dataset(sheet_path, sheet_title, config.granularity)
+def process_sheet_no_slice(sheet_title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    raw_data = load_dataset(sheet_title, config.granularity)
     _, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict[hyplist.smoothing])
     return features, ground_truth
 
-def process_sheet(sheet_path, sheet_title, datasplit, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    raw_data = load_dataset(sheet_path, sheet_title, config.granularity)
+def process_sheet(sheet_title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, allow_shuffle = True):
+    raw_data = load_dataset(sheet_title, config.granularity)
     indexes, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict[hyplist.smoothing])
     if(hyperparameter_dict[hyplist.use_ref_points]): 
         features = calc_ref_features(features, hyperparameter_dict[hyplist.ref_point1], hyperparameter_dict[hyplist.ref_point2])
-    x_train, y_train, x_val, y_val, x_test, y_test = slice_data(indexes, features, ground_truth, datasplit, hyperparameter_dict[hyplist.dilation_group][hyplist.past_history], config)
+
+    x, y = slice_data(indexes, features, ground_truth, hyperparameter_dict[hyplist.dilation_group][hyplist.past_history], config)
     # Data is now sliced into past_history slices
 
-    datashape = x_train.shape[-2:]
-    batch_train, batch_val, batch_test = batch_data(x_train, y_train, x_val, y_val, x_test, y_test, config.batch_size, 
-                                                    config.epochs, hyperparameter_dict[hyplist.shuffle_buffer_size])
-
     sbs = hyperparameter_dict[hyplist.shuffle_buffer_size]
-    if sbs != 0:
-        x_train = shuffle_buffer_manual(x_train, sbs)
-        y_train = shuffle_buffer_manual(y_train, sbs)
-        x_val = shuffle_buffer_manual(x_val, sbs)
-        y_val = shuffle_buffer_manual(y_val, sbs)
-        x_test = shuffle_buffer_manual(x_test, sbs)
-        y_test = shuffle_buffer_manual(y_test, sbs)
+    if sbs != 0 and allow_shuffle: # We allow turning off shuffling for either the test set, or for plotting purposes
+        x = shuffle_buffer_manual(x, sbs)
+        y = shuffle_buffer_manual(y, sbs)
 
-    #return batched_data(datashape, batch_train, batch_val, batch_test, len(x_train), len(x_val), len(x_test))
-    return batched_data(datashape, batch_train, batch_val, batch_test, len(x_train), len(x_val), len(x_test), x_train, y_train, x_val, y_val, x_test, y_test)
-
-
-def batch_data(x_train, y_train, x_val, y_val, x_test, y_test, batch_size, epochs, shuffle_buffer_size):
-    batched_train_data = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-    if shuffle_buffer_size != 0:
-        batched_train_data = batched_train_data.shuffle(shuffle_buffer_size)
-    batched_train_data = batched_train_data.batch(batch_size).repeat(epochs)
-
-    batched_val_data = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(batch_size)#.repeat(epochs)
-    batched_test_data = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(batch_size)
-    return batched_train_data, batched_val_data, batched_test_data
+    return batched_data(x.shape[-2:], x, y, len(x))
 
 def shuffle_buffer_manual(dataset, shuffle_buffer_size):
     buffer = dataset[:shuffle_buffer_size] # fill up buffer
@@ -76,24 +47,16 @@ def shuffle_buffer_manual(dataset, shuffle_buffer_size):
         shuffled_dataset.append(buffer[rand_index])
         buffer[rand_index] = dataset[i]
     shuffled_dataset.extend(buffer)
-    return shuffled_dataset
+    return np.array(shuffled_dataset)
 
-def slice_data(indexes, features, ground_truth, datasplit, past_history, config: configuration):
-    (train_start, val_start, test_start) = datasplit
+def slice_data(indexes, features, ground_truth, past_history, config: configuration):
     ft, sssw, gran = config.future_target, config.step_size_sliding_window, config.granularity
-
     dataset = features.values
-    x = lambda a: int(len(dataset) * a)
-    train_start_num, val_start_num, test_start_num = x(train_start), x(val_start), x(test_start)
+    x, y = multivariate_data(dataset, ground_truth.values, 0, None, past_history, ft, sssw, gran)
+    return x, y
 
-    x_train, y_train = multivariate_data(dataset, ground_truth.values, train_start_num, val_start_num, past_history, ft, sssw, gran)
-    x_val, y_val = multivariate_data(dataset, ground_truth.values, val_start_num, test_start_num, past_history, ft, sssw, gran)
-    x_test, y_test = multivariate_data(dataset, ground_truth.values, test_start_num, None, past_history, ft, sssw, gran)
-    return x_train, y_train, x_val, y_val, x_test, y_test
-
-# Create array of all sliding windows of the data
-def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_index, history_size,
-                      target_size, step, granularity):
+def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_index, history_size, target_size, step, granularity):
+    # Create array of all sliding windows of the data
     data, labels = [], []
     start_index = start_index + history_size 
     if end_index is None: 
@@ -104,13 +67,6 @@ def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_i
         labels.append(dataset_ground_truth[i+target_size])
     return np.array(data), np.array(labels)
 
-#def calc_ref_features2(features, ref_point1, ref_point2):
-#    relative_features1 = [subtract_refvalue(obs, obs[ref_point1]) for obs in features.values]
-#    relative_features2 = [subtract_refvalue(obs, obs[ref_point2]) for obs in features.values]
-#    return pd.DataFrame([relative_features1[i] + relative_features2[i] for i in range(0, len(features))])
-#def subtract_refvalue2(obs, ref_value):
-#    return [val - ref_value for idx, val in enumerate(obs)]
-
 def calc_ref_features(features, ref_point1, ref_point2):
     relative_features1 = [subtract_refvalue(obs, obs[ref_point1]) for obs in features.values]
     relative_features2 = [subtract_refvalue(obs, obs[ref_point2]) for obs in features.values]
@@ -120,8 +76,7 @@ def calc_ref_features(features, ref_point1, ref_point2):
 def subtract_refvalue(obs, ref_value):
     return [val - ref_value for val in obs]
 
-def load_dataset(sheet_path, sheet_title, granularity):
-    # sheet_data = pd.read_csv(f"Datasets/{sheet_path}_{sheet_title}_raw_data.csv") # Our old datasets had this weird naming scheme
+def load_dataset(sheet_title, granularity):
     sheet_data = pd.read_csv(f"Datasets/{sheet_title}.csv")
     sheet_data.columns = columns_data
     return sheet_data
@@ -129,6 +84,6 @@ def load_dataset(sheet_path, sheet_title, granularity):
 def split_data(raw_data, granularity, smoothing):
     indexes = range(0, len(raw_data), 1)[::granularity] # Each timestep is a millisecond
     features = raw_data[columns_features_considered][::granularity].ewm(span=smoothing).mean() 
-    # TODO: Be aware that smoothing may not be applicable in an online application (where we dont have values before and after)
+    # NOTE: Be aware that this type of smoothing may not be applicable in an online application (where we dont have values before and after)
     ground_truth = pd.DataFrame(raw_data[column_ground_truth][::granularity]).ewm(span=smoothing).mean()
     return indexes, features, ground_truth

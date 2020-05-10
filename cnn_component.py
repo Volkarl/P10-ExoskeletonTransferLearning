@@ -49,10 +49,10 @@ class Model_CNN:
         self._hyplist = hyplist
         self._hyperparameter_dict = hyperparameter_dict
 
-    def fit(self, batched_train_data, batched_val_data, train_slices, val_slices):
-        fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, self._config, self._hyplist, self._hyperparameter_dict)
+    #def fit(self, batched_train_data, batched_val_data, train_slices, val_slices):
+    #    fit_model_cnn(self._model, batched_train_data, batched_val_data, train_slices, val_slices, self._config, self._hyplist, self._hyperparameter_dict)
 
-    def fit_ada(self, x, y): # fit_unbatched
+    def fit_ada(self, x, y): # TODO NAME CHANGE TO fit_unbatched
         self._model.fit(x, y, batch_size=self._config.batch_size, epochs=self._config.epochs, verbose=0) # TODO: INCLUDE BATCH SIZE AND EPOCHS AGAIN
 
     def predict(self, x):
