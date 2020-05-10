@@ -2,8 +2,10 @@ import pickle
 from hyperopt import fmin, tpe, Trials
 
 def perform_hyperopt(objective, space, max_evals):
-    # Initialize an empty trials database
-    trials = Trials()
+    try: 
+        trials = pickle.load(open("trials.p", "rb"))
+    except FileNotFoundError:
+        trials = Trials() # Initialize an empty trials database
 
     total_evals = 500
     steps_before_saving = 5
@@ -17,7 +19,5 @@ def perform_hyperopt(objective, space, max_evals):
 
         pickle.dump(trials, open("trials.p", "wb"))
         trials = pickle.load(open("trials.p", "rb"))
-
-    # TODO: Add code to open a trials file and continue on, if one such file exists
 
     print(best)
