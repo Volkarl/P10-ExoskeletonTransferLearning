@@ -25,7 +25,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline6(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline2(config, hyplist, hyperparameter_dict)
         
         #loss_lst = []
         #for _ in range(10): loss_lst.append(run_Baseline1(config, hyplist, hyperparameter_dict))
@@ -87,11 +87,6 @@ def setup_windows_linux_pathing():
     gitdir = "P10-ExoskeletonTransferLearning"
     if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
 
-def find_datashape(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    # We load the first sheet as a test-run to see which datashape it ends up with
-    person = data.process_sheet(config.dataset_sheet_titles[0], config, hyplist, hyperparameter_dict, False)
-    return person.datashape
-
 def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
     model = Model_Ensemble_CNN(find_datashape(config, hyplist, hyperparameter_dict), config.train_ppl_amount, config, hyplist, hyperparameter_dict)
@@ -123,10 +118,6 @@ def unpack_sessions(files, config: configuration, hyplist: hyperparameter_list, 
 
 def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
-    # Possible TODO: Should we fully yeet batchdata and add batch_size and epochs into fit function instead? 
-    # We could perhaps replicate shuffle_buffer as just a manual shuffling around a moving point? Then we would still have that hyperparameter
-
-
 
     # TRAINING
     sessions = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
@@ -312,7 +303,7 @@ def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list
     return 0
 
 
-do_param_optimization = False
+do_param_optimization = True
 
 config = configuration()
 hyplist = hyperparameter_list()

@@ -24,16 +24,15 @@ def process_sheet_no_slice(sheet_title, config: configuration, hyplist: hyperpar
 def process_sheet(sheet_title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, allow_shuffle = True):
     raw_data = load_dataset(sheet_title, config.granularity)
     indexes, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict[hyplist.smoothing])
-    if(hyperparameter_dict[hyplist.use_ref_points]): 
-        features = calc_ref_features(features, hyperparameter_dict[hyplist.ref_point1], hyperparameter_dict[hyplist.ref_point2])
+    if(hyperparameter_dict[hyplist.ref_group][hyplist.use_ref_points]): 
+        features = calc_ref_features(features, hyperparameter_dict[hyplist.ref_group][hyplist.ref_point1], hyperparameter_dict[hyplist.ref_group][hyplist.ref_point2])
 
     x, y = slice_data(indexes, features, ground_truth, hyperparameter_dict[hyplist.dilation_group][hyplist.past_history], config)
     # Data is now sliced into past_history slices
 
-    sbs = hyperparameter_dict[hyplist.shuffle_buffer_size]
-    if sbs != 0 and allow_shuffle: # We allow turning off shuffling for either the test set, or for plotting purposes
-        x = shuffle_buffer_manual(x, sbs)
-        y = shuffle_buffer_manual(y, sbs)
+    if hyperparameter_dict[hyplist.shuffle_group][hyplist.use_shuffle_buffer] != 0 and allow_shuffle: # We allow turning off shuffling for either the test set, or for plotting purposes
+        x = shuffle_buffer_manual(x, hyperparameter_dict[hyplist.shuffle_group][hyplist.shuffle_buffer_size])
+        y = shuffle_buffer_manual(y, hyperparameter_dict[hyplist.shuffle_group][hyplist.shuffle_buffer_size])
 
     return batched_data(x.shape[-2:], x, y, len(x))
 

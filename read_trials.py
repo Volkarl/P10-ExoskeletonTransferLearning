@@ -11,21 +11,21 @@ print("Set breakpoint here")
 #    args = item["vals"]
 #    res = item["result"]["loss"]
 
-itemtuples = [(item["misc"]["vals"]["dilation_group"], item["misc"]["vals"]["use_ref_points"], item["result"]["loss"]) for item in trials.trials]
-(dil, ref, loss) = zip(*itemtuples)
+#itemtuples = [(item["misc"]["vals"]["dilation_group"], item["misc"]["vals"]["use_ref_points"], item["result"]["loss"]) for item in trials.trials]
+#(dil, ref, loss) = zip(*itemtuples)
 
 #plt.figure()
 
-plt.plot(dil, 'ro')
-plt.title('Use_dilation (1 is true, 0 is false)')
+#plt.plot(dil, 'ro')
+#plt.title('Use_dilation (1 is true, 0 is false)')
 
 #plt.plot(loss)
-plt.plot(pd.DataFrame(loss).ewm(span=1).mean())
-plt.title('MAE')
+#plt.plot(pd.DataFrame(loss).ewm(span=1).mean())
+#plt.title('MAE')
 
 #plt.plot(ref, 'g^')
 #plt.legend()
-plt.show()
+#plt.show()
 
 
 print("Set breakpoint here")
