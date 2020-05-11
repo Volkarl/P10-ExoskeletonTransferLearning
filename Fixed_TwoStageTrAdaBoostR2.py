@@ -93,6 +93,9 @@ class TwoStageTrAdaBoostR2:
         # Caclulate beta value, then update target vs source weight relationship accordingly
         beta = self._beta_binary_search(step, sample_weights, error_vect, 1e-30, is_start_step, start_step_theoretical_sum)
 
+        print(f"Beta: {beta}")
+        # At the first step, beta is tiny, and basically doesn't allow source weights to change. However, target is still allowed to change individual weights through AdaboostR2
+
         if not step == self.steps - 1:
             sample_weights[:-self.sample_size[-1]] *= np.power(beta, (error_vect[:-self.sample_size[-1]]) * self.learning_rate)
         return sample_weights

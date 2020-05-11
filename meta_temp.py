@@ -25,7 +25,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline2(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline6(config, hyplist, hyperparameter_dict)
         
         #loss_lst = []
         #for _ in range(10): loss_lst.append(run_Baseline1(config, hyplist, hyperparameter_dict))
@@ -195,7 +195,6 @@ def run_Baseline3(config: configuration, hyplist: hyperparameter_list, hyperpara
     return 0
 
 def run_Baseline4(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    # NOTE: IS THIS ONE EVEN NEEDED?
     # CNN with layer fine-tuning
     # Train set: 9/10th of person A, 9/10th of person B -> Then fine tune last layers on 4/5ths of person C
     # Test set: 1/10th of person A, 1/10th of person B -> After fine tuning of the last layers, test on 1/5ths of person C
@@ -211,53 +210,63 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Two-Stage AdaBoost.R2 out-of-the-box (using regression decision trees)
     # Train set: Source is person A + person B. Target is 4/5th of person C.
     # Test set: 1/5th of person C
+    people = config.get_people_iterator()
+    source_files = people[0][:5]
+    source_files.extend(people[1][:5])
+    target_files = people[2][:4]
+    test_files = people[2][4:]
 
-    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
-
-    sessions_source = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    sessions_target = sessions_novel_person[:-1] # Leave the last session for the test set
-    sessions_test = sessions_novel_person[-1:]
-
+    sessions_source = unpack_sessions(source_files, config, hyplist, hyperparameter_dict, True)
+    sessions_target = unpack_sessions(target_files, config, hyplist, hyperparameter_dict, True)
     sliced_X_source, sliced_Y_source = flatten_split_sessions(sessions_source)
     sliced_X_target, sliced_Y_target = flatten_split_sessions(sessions_target)
+
     sliced_X_train, sliced_Y_train = [], []
     sliced_X_train.extend(sliced_X_source)
     sliced_X_train.extend(sliced_X_target)
     sliced_Y_train.extend(sliced_Y_source)
     sliced_Y_train.extend(sliced_Y_target)
     sliced_X_train = np.array(sliced_X_train)
+    sliced_X_train = make_2d_array(sliced_X_train) # Reshape to work with our DecisionTreeRegressor
     sliced_Y_train = np.array(sliced_Y_train)
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
-    sliced_X_train = make_2d_array(sliced_X_train) # Reshape to work with our DecisionTreeRegressor
 
     # Create default tradaboost estimator
-    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=2, steps=2, fold=2) # TODO: 2,2,2 are temp values
+    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=3, steps=3, fold=2) # TODO: 2,2,2 are temp values
     regressor.fit(sliced_X_train, sliced_Y_train)
-    # TODO PUT ESTIMATORS, STEPS AND FOLDS INTO SOME CLASS WHERE HYPEROPT CAN OPTIMIZE IT? Nope, its not feasible. 
-
 
     # Evaluate
-    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_test) # Test only on the last session from the target person
-    sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
+    sessions_test = unpack_sessions(test_files, config, hyplist, hyperparameter_dict, False)
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_test)
     sliced_X_test = make_2d_array(sliced_X_test) # Reshape to work with our DecisionTreeRegressor
+    sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
     prediction = regressor.predict(sliced_X_test)
+
+    # Plotting
+    errors = regressor.errors_
+    ensemble_weights = [model.estimator_weights_ for model in regressor.models_]
+    stacked_histogram(np.array(ensemble_weights), np.array(errors), do_savefig=False, savename="baseline5")
+    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "TwoStageTrAdaBoostR2", "x", "y", "TwoStageTrAdaBoostR2 Predictions", False, "baseline5")
+
     return mean_absolute_error(sliced_Y_test, prediction)
 
 def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     # Exo-Ada
     # Train set: Source is person A + person B. Target is 4/5th of person C.
     # Test set: 1/5th of person C
-    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
 
-    sessions_source = unpack_sessions(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    sessions_novel_person = unpack_sessions(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    sessions_target = sessions_novel_person[:-1] # Leave the last session for the test set
-    sessions_test = sessions_novel_person[-1:]
+    people = config.get_people_iterator()
+    source_A_files = people[0][:5]
+    source_B_files = people[1][:5]
+    target_C_files = people[2][:4]
+    test_files = people[2][4:]
 
-    sliced_X_source_A, sliced_Y_source_A = flatten_split_sessions(sessions_source[:5])
-    sliced_X_source_B, sliced_Y_source_B = flatten_split_sessions(sessions_source[5:])
-    sliced_X_target_C, sliced_Y_target_C = flatten_split_sessions(sessions_target)
+    sessions_A_source = unpack_sessions(source_A_files, config, hyplist, hyperparameter_dict, False)
+    sessions_B_source = unpack_sessions(source_B_files, config, hyplist, hyperparameter_dict, False)
+    sessions_C_target = unpack_sessions(target_C_files, config, hyplist, hyperparameter_dict, False)
+    sliced_X_source_A, sliced_Y_source_A = flatten_split_sessions(sessions_A_source)
+    sliced_X_source_B, sliced_Y_source_B = flatten_split_sessions(sessions_B_source)
+    sliced_X_target_C, sliced_Y_target_C = flatten_split_sessions(sessions_C_target)
 
     sliced_X_train, sliced_Y_train = [], []
     for lst in [sliced_X_source_A, sliced_X_source_B, sliced_X_target_C] : sliced_X_train.extend(lst)
@@ -267,8 +276,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
 
     # Create Exo-Ada
-    ds = find_datashape(config, hyplist, hyperparameter_dict)
-    create_base_estimator_fn = lambda: cnn.Model_CNN(ds, config, hyplist, hyperparameter_dict)
+    create_base_estimator_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
     regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=2, steps=2, fold=2, start_steps=0) # TODO: 2,2,2 are temp values
     
     # Initializing weights such that each dataset has a percentage to 1 / n_samples
@@ -291,11 +299,12 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     stacked_histogram(np.array(ew), np.array(errors), do_savefig=False, savename="baseline6")
 
     # Evaluate
+    sessions_test = unpack_sessions(test_files, config, hyplist, hyperparameter_dict, False)
     sliced_X_test, sliced_Y_test = flatten_split_sessions(sessions_test) # Test only on the last session from the target person
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
     prediction = regressor.predict(sliced_X_test)
     
-    make_simple_comparison_plot(sliced_Y_test, "target_test", prediction, "Exo-Ada", "x", "y", "Exo-Ada Predictions", False, "baseline6")
+    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "Exo-Ada", "x", "y", "Exo-Ada Predictions", False, "baseline6")
     return mean_absolute_error(sliced_Y_test, prediction)
 
 def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
@@ -303,7 +312,7 @@ def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list
     return 0
 
 
-do_param_optimization = True
+do_param_optimization = False
 
 config = configuration()
 hyplist = hyperparameter_list()
