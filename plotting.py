@@ -69,29 +69,25 @@ def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C, do_sav
     else: plt.show()
     print("BREAKPOINT HERE")
 
-def unpack_sessions_no_slice(person_iterator, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    session_features, session_truths = [], []
-    for person in person_iterator:
-        for sheet in person:
-            features, truths = process_sheet_no_slice(sheet, config, hyplist, hyperparameter_dict)
-            session_features.append(features.values)
-            session_truths.append(truths.values)
-    return session_features, session_truths
+def unpack_sessions_no_slice(files, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    return [process_sheet_no_slice(sheet, config, hyplist, hyperparameter_dict) for sheet in files]
 
 def plot_dataset_comparison(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, flatten_split_sessions):
     hyperparameter_dict[hyplist.use_ref_points] = False
 
-    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
-    session_features_train, session_truths_train = unpack_sessions_no_slice(train_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    features_person1, truths_person1 = session_features_train[0], session_truths_train[0]
-    features_person2, truths_person2 = session_features_train[5], session_truths_train[5]
-    session_features_test, session_truths_test = unpack_sessions_no_slice(test_ppl_file_iter, config, hyplist, hyperparameter_dict)
-    features_person3, truths_person3 = session_features_test[0], session_truths_test[0]
+    people = config.get_people_iterator()
+    A_files = people[0][:1]
+    B_files = people[1][:1]
+    C_files = people[2][:1]
 
-    reduce_size = lambda lst, divide: lst[0:(len(lst) // divide)] # Reduce our 60ish second recording to 10
-    X_1, Y_1 = reduce_size(features_person1, 4), reduce_size(truths_person1, 4)
-    X_2, Y_2 = reduce_size(features_person2, 4), reduce_size(truths_person2, 4)
-    X_3, Y_3 = reduce_size(features_person3, 6), reduce_size(truths_person3, 6)
+    a = unpack_sessions_no_slice(A_files, config, hyplist, hyperparameter_dict)
+    sliced_X_A, sliced_Y_A = flatten_split_sessions(a)
+    sliced_X_B, sliced_Y_B = flatten_split_sessions(unpack_sessions_no_slice(B_files, config, hyplist, hyperparameter_dict))
+    sliced_X_C, sliced_Y_C = flatten_split_sessions(unpack_sessions_no_slice(C_files, config, hyplist, hyperparameter_dict))
+
+    X_1, Y_1 = sliced_X_A[:500], sliced_Y_A[:500]
+    X_2, Y_2 = sliced_X_B[:500], sliced_Y_B[:500]
+    X_3, Y_3 = sliced_X_C[:500], sliced_Y_C[:500]
 
     make_mean = lambda lst: [np.mean(obs) for obs in lst]
     X_1 = make_mean(X_1)
@@ -103,24 +99,28 @@ def plot_dataset_comparison(config: configuration, hyplist: hyperparameter_list,
     #X_2 = make_first_sensor(X_2)
     #X_3 = make_first_sensor(X_3)
 
-    plt.figure()
-    plt.plot(X_1, c="b", label="Emil", linewidth=0.5)
-    plt.plot(X_2, c="y", label="Jona", linewidth=0.5)
-    plt.plot(X_3, c="r", label="Palle", linewidth=0.5)
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.title("Comparison of Sensor Value Means Between People")
-    plt.legend()
-    plt.show()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(2,2,1)
+    ax2 = fig.add_subplot(2,2,2)
 
-    plt.figure()
-    plt.plot(Y_1, c="b", label="Emil", linewidth=0.5)
-    plt.plot(Y_2, c="y", label="Jona", linewidth=0.5)
-    plt.plot(Y_3, c="r", label="Palle", linewidth=0.5)
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.title("Comparison of Angle Values Between People")
-    plt.legend()
+    ax1.plot(Y_1, c="b", label="Person A", linewidth=1)
+    ax1.plot(Y_2, c="y", label="Person B", linewidth=1)
+    ax1.plot(Y_3, c="r", label="Person C", linewidth=1)
+    ax1.set_xlabel("Time (0.01 s)")
+    ax1.set_ylabel("Radians")
+    ax1.set_title("Elbow Angle")
+    
+    fig.legend(loc="lower center", ncol=3)
+    
+    ax2.plot(X_1, c="b", label="Person A", linewidth=1)
+    ax2.plot(X_2, c="y", label="Person B", linewidth=1)
+    ax2.plot(X_3, c="r", label="Person C", linewidth=1)
+    ax2.set_xlabel("Time (0.01 s)")
+    ax2.set_ylabel("Value")
+    ax2.set_title("Sensor Value Means")
+    ax2.yaxis.set_label_position("right")
+    ax2.yaxis.tick_right()
+
     plt.show()
 
     print("end")

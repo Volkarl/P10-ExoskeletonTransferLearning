@@ -18,8 +18,8 @@ column_ground_truth = columns_data[10]
 
 def process_sheet_no_slice(sheet_title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     raw_data = load_dataset(sheet_title, config.granularity)
-    _, features, ground_truth = split_data(raw_data, config.granularity, config.smoothing)
-    return features, ground_truth
+    _, x, y = split_data(raw_data, config.granularity, config.smoothing)
+    return batched_data(x.shape[-2:], x.values, y.values, len(x))
 
 def process_sheet(sheet_title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, allow_shuffle = True):
     raw_data = load_dataset(sheet_title, config.granularity)

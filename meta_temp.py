@@ -24,8 +24,8 @@ from ensemble import Model_Ensemble_CNN
 def objective(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
     try:
         setup_windows_linux_pathing()
-        #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline2(config, hyplist, hyperparameter_dict)
+        loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
+        #loss = run_Baseline2(config, hyplist, hyperparameter_dict)
         
         #loss_lst = []
         #for _ in range(10): loss_lst.append(run_Baseline1(config, hyplist, hyperparameter_dict))
