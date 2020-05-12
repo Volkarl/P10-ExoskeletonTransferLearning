@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
 
 from TwoStageTrAdaBoost import TwoStageTrAdaBoostR2
-from plotting_experiments import plot_dataset_comparison, make_simple_comparison_plot, weights_across_time, stacked_histogram
+from plotting import plot_dataset_comparison, make_simple_comparison_plot, weights_across_time, stacked_histogram
 from Fixed_TwoStageTrAdaBoostR2 import TwoStageTrAdaBoostR2 as ExoAda
 from config_classes import hyperparameter_list, configuration
 import optimizer_component as opt
@@ -311,7 +311,7 @@ hyplist = hyperparameter_list()
 if do_param_optimization: 
     partial_objective = partial(objective, config, hyplist)
     # This is basically function currying. Defines our objective function with the config_dict parameter already present
-    opt.perform_hyperopt(partial_objective, hyplist.space(), 100)
+    opt.perform_hyperopt(partial_objective, hyplist.space(), 1000)
 
 else: 
     objective(config, hyplist, hyplist.best_arguments())

@@ -6,7 +6,6 @@ from cnn_component import Model_CNN
 class Model_Ensemble_CNN:
     def __init__(self, datashape, person_amount, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
         self._models = [Model_CNN(datashape, config, hyplist, hyperparameter_dict) for i in range(person_amount)]
-        # It may be faster to perform deepcopy here ? !
     
     def fit(self, model_idx, train_person_sessions: [batched_data]):
         for s_idx, session in enumerate(train_person_sessions):

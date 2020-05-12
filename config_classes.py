@@ -48,7 +48,7 @@ class hyperparameter_list:
                 }])
         }
 
-    def best_arguments(self): # This is just hard coded to whatever hyperopt found
+    def best_arguments(self): # This is hard coded to whatever hyperopt found
         return {
             self.filters: 1 + 94,
             self.optimizer: "rmsprop",
