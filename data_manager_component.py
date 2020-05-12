@@ -69,6 +69,8 @@ def multivariate_data(dataset_features, dataset_ground_truth, start_index, end_i
 def calc_ref_features(features, ref_point1, ref_point2):
     relative_features1 = [subtract_refvalue(obs, obs[ref_point1]) for obs in features.values]
     relative_features2 = [subtract_refvalue(obs, obs[ref_point2]) for obs in features.values]
+    for row in relative_features1: del row[ref_point1] # Delete the two null rows
+    for row in relative_features2: del row[ref_point2]
     return pd.DataFrame([relative_features1[i] + relative_features2[i] for i in range(0, len(features))])
     # TODO: Make a new method for this, one which removes the two null reference points, and makes it percentage based instead
 
