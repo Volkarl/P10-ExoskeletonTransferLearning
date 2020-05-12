@@ -1,22 +1,21 @@
-#import matplotlib as mpl
 import matplotlib.pyplot as plt
-#plt.rcParams["figure.figsize"] = (20,10)
 from config_classes import hyperparameter_list, configuration
 import numpy as np
 from data_manager_component import process_sheet_no_slice
 
-def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_name, title, do_savefig = False, savename = None):
-    plt.figure()
-    plt.plot(y1, c="b", label=y1_name, linewidth=0.5)
-    plt.plot(y2, c="r", label=y2_name, linewidth=2)
-    plt.xlabel(x_axis_name)
-    plt.ylabel(y_axis_name)
-    plt.title(title)
-    plt.legend()
-    if do_savefig: plt.savefig(f'comp_{savename}.png')
+def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_name, title = None, do_savefig = False, savename = None):
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(y1, c="b", label=y1_name, linewidth=0.5)
+    ax.plot(y2, c="r", label=y2_name, linewidth=2)
+    ax.set_xlabel(x_axis_name)
+    ax.set_ylabel(y_axis_name)
+    if title != None: ax.set_title(title)
+    ax.legend()
+    if do_savefig: fig.savefig(f'comp_{savename}.png')
     else: plt.show()
 
-def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'w', 'purple', 'crimson'], do_savefig = False, savename = None):
+def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'lime', 'purple', 'crimson'], do_savefig = False, savename = None):
     colors = colors[:stacked_hist_values.shape[1]] # Shortens the color array, if it's longer than how many values we have to stack for each column of our histogram
     X = range(stacked_hist_values.shape[0])
     accuracies = [1 - er for er in errors]
@@ -26,24 +25,27 @@ def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 
     bottom_vals = np.zeros(stacked_hist_values.shape[0])
     w_totals = np.sum(stacked_hist_values, axis = 1) # Find the sum for each of the ensemble models
 
+    fig = plt.figure()
+    #fig.suptitle("Empty figure")
+    #ax.set_title("Empty plot")
+    ax = fig.add_subplot(1,1,1)
+    ax.set_xlabel("Ensemble Models")
+    ax.set_ylabel("WeakLearner Weight Distribution") # So basically this is how much each weaklearner contributes to the accuracy
+
     for stack in range(stacked_hist_values.shape[1]):
         weights = stacked_hist_values[:,stack]
         weights = [(w / w_totals[idx]) * accuracies[idx] for idx, w in enumerate(weights)] # Calculate the percentage of how much each estimator/weaklearner contributes to the accuracy
-        plt.bar(X, weights, color = colors[stack], alpha = 0.5, bottom = bottom_vals)
+        ax.bar(X, weights, color = colors[stack], alpha = 0.5, bottom = bottom_vals)
         for idx, w in enumerate(weights):
             bottom_vals[idx] += w
-
-    plt.xlabel("Ensemble Models")
-    plt.ylabel("WeakLearner Weight Distribution") # So basically this is how much each weaklearner contributes to the accuracy
     
-    if do_savefig: plt.savefig(f'sh_{savename}.png')
+    if do_savefig: fig.savefig(f'sh_{savename}.png')
     else: plt.show()
+    print("BREAKPOINT HERE")
 
-    print("stop")
-
-# ar = np.array([[2,0.5,1.8,0.2],[0.2,2,0.2,1.5],[0.5,2,1.5,2],[2,0.7,0.2,1.5],[1.5,2,0.2,2]])
-# er = np.array([0.2,0.22,0.23,0.21,0.24])
-# stacked_histogram(ar, er)
+#ar = np.array([[2,0.5,1.8,0.2],[0.2,2,0.2,1.5],[0.5,2,1.5,2],[2,0.7,0.2,1.5],[1.5,2,0.2,2]])
+#er = np.array([0.2,0.22,0.23,0.21,0.24])
+#stacked_histogram(ar, er, do_savefig=True, savename="asfsa")
 
 def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C, do_savefig = False, savename = None):
     y_A, y_B, y_C = [], [], []
@@ -53,16 +55,17 @@ def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C, do_sav
         y_B.append(np.sum(sw_B))
         y_C.append(np.sum(sw_C))
 
-    plt.figure()
-    plt.plot(y_A, c="b", label=f"Dataset A (samples {len_A}, sum {np.sum(y_A)})", linewidth=2)
-    plt.plot(y_B, c="r", label=f"Dataset B (samples {len_B}, sum {np.sum(y_B)})", linewidth=2)
-    plt.plot(y_C, c="y", label=f"Dataset C (samples {len_C}, sum {np.sum(y_C)})", linewidth=2)
-    plt.xlabel("Boosting Step")
-    plt.ylabel("Total Dataset Weight")
-    plt.title("Distribution of Sample Weights Over Boosting Iterations")
-    plt.legend()
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.plot(y_A, c="b", label=f"Source A (samples {len_A}, sum {'%.4f' % np.sum(y_A)})", linewidth=2)
+    ax.plot(y_B, c="r", label=f"Source B (samples {len_B}, sum {'%.4f' % np.sum(y_B)})", linewidth=2)
+    ax.plot(y_C, c="y", label=f"Target C (samples {len_C}, sum {'%.4f' % np.sum(y_C)})", linewidth=2)
+    ax.set_xlabel("Boosting Step")
+    ax.set_ylabel("Total Dataset Weight")
+    ax.set_title("Distribution of Sample Weights Between Datasets")
+    ax.legend()
 
-    if do_savefig: plt.savefig(f'wat_{savename}.png')
+    if do_savefig: fig.savefig(f'wat_{savename}.png')
     else: plt.show()
     print("BREAKPOINT HERE")
 

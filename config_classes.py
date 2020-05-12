@@ -21,7 +21,7 @@ class hyperparameter_list:
     #@staticmethod
     def space(self):
         return {
-            self.smoothing: hp.choice(self.smoothing, [1, 25, 50, 75, 100]),
+            self.smoothing: hp.choice(self.smoothing, [1, 25, 50]), 
             self.filters: 1 + hp.randint(self.filters, 100),
             self.optimizer: hp.choice(self.optimizer, ["adadelta", "adam", "rmsprop"]),
             self.shuffle_group: hp.choice(self.shuffle_group, [{ 
@@ -52,22 +52,22 @@ class hyperparameter_list:
 
     def best_arguments(self): # This is just hard coded to whatever hyperopt found
         return {
-            self.smoothing: 25,
-            self.filters: 1 + 22,
-            self.optimizer: "adam",
+            self.smoothing: 100,
+            self.filters: 1 + 94,
+            self.optimizer: "rmsprop",
             self.shuffle_group: {
-                self.use_shuffle_buffer: True,
+                self.use_shuffle_buffer: False,
                 self.shuffle_buffer_size: 1 + 17
             },
             self.ref_group: {
                 self.use_ref_points: True,
-                self.ref_point1: 2,
+                self.ref_point1: 0,
                 self.ref_point2: 6
             },
             self.dilation_group: {
                 self.use_dilation: True,
-                self.layer_amount: 2 + 4,
-                self.past_history: 150 + 141,
+                self.layer_amount: 2 + 2,
+                self.past_history: 150 + 123,
                 self.kernel_size: 2
             }
         }
@@ -76,7 +76,7 @@ class configuration:
     def __init__(self): 
         self.dataset_sheet_titles = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE"]
         self.attempt_name = "attempt_name"
-        self.granularity = 10
+        self.granularity = 30
         self.step_size_sliding_window = 1
         self.future_target = 1
         self.epochs = 10

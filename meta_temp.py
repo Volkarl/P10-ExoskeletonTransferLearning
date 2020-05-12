@@ -25,7 +25,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline2(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline6(config, hyplist, hyperparameter_dict)
         
         #loss_lst = []
         #for _ in range(10): loss_lst.append(run_Baseline1(config, hyplist, hyperparameter_dict))
@@ -252,9 +252,9 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     target_C_files = people[2][:4]
     test_files = people[2][4:]
 
-    sessions_A_source = unpack_sessions(source_A_files, config, hyplist, hyperparameter_dict, False)
-    sessions_B_source = unpack_sessions(source_B_files, config, hyplist, hyperparameter_dict, False)
-    sessions_C_target = unpack_sessions(target_C_files, config, hyplist, hyperparameter_dict, False)
+    sessions_A_source = unpack_sessions(source_A_files, config, hyplist, hyperparameter_dict, True)
+    sessions_B_source = unpack_sessions(source_B_files, config, hyplist, hyperparameter_dict, True)
+    sessions_C_target = unpack_sessions(target_C_files, config, hyplist, hyperparameter_dict, True)
     sliced_X_source_A, sliced_Y_source_A = flatten_split_sessions(sessions_A_source)
     sliced_X_source_B, sliced_Y_source_B = flatten_split_sessions(sessions_B_source)
     sliced_X_target_C, sliced_Y_target_C = flatten_split_sessions(sessions_C_target)
@@ -281,13 +281,13 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     regressor.fit(sliced_X_train, sliced_Y_train, sample_weights)
 
     # Plot sample_weights for the datasets across time
-    weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C), False, "baseline6")
+    weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C), True, "baseline6")
 
     errors, idx, bew, ew = regressor.get_estimator_info()
     print(f"Errors {errors}")
     print(f"Best idx {idx}")
     print(f"Weights of best estimator {bew}")
-    stacked_histogram(np.array(ew), np.array(errors), do_savefig=False, savename="baseline6")
+    stacked_histogram(np.array(ew), np.array(errors), do_savefig=True, savename="baseline6")
 
     # Evaluate
     sessions_test = unpack_sessions(test_files, config, hyplist, hyperparameter_dict, False)
@@ -295,7 +295,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
     prediction = regressor.predict(sliced_X_test)
     
-    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "Exo-Ada", "x", "y", "Exo-Ada Predictions", False, "baseline6")
+    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "Exo-Ada", "x", "y", "Exo-Ada Predictions", True, "baseline6")
     return mean_absolute_error(sliced_Y_test, prediction)
 
 def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
@@ -303,7 +303,7 @@ def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list
     return 0
 
 
-do_param_optimization = True
+do_param_optimization = False
 
 config = configuration()
 hyplist = hyperparameter_list()
