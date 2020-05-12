@@ -3,7 +3,6 @@ from hyperopt import hp
 class hyperparameter_list:
     def __init__(self):
         self.past_history = "past_history"
-        self.smoothing = "smoothing"
         self.shuffle_group = "shuffle_group"
         self.use_shuffle_buffer = "use_shuffle_buffer"
         self.shuffle_buffer_size = "shuffle_buffer_size"
@@ -21,7 +20,6 @@ class hyperparameter_list:
     #@staticmethod
     def space(self):
         return {
-            self.smoothing: hp.choice(self.smoothing, [1, 25, 50]), 
             self.filters: 1 + hp.randint(self.filters, 100),
             self.optimizer: hp.choice(self.optimizer, ["adadelta", "adam", "rmsprop"]),
             self.shuffle_group: hp.choice(self.shuffle_group, [{ 
@@ -52,7 +50,6 @@ class hyperparameter_list:
 
     def best_arguments(self): # This is just hard coded to whatever hyperopt found
         return {
-            self.smoothing: 100,
             self.filters: 1 + 94,
             self.optimizer: "rmsprop",
             self.shuffle_group: {
@@ -77,6 +74,7 @@ class configuration:
         self.dataset_sheet_titles = ["EmilA", "EmilB", "EmilC", "EmilD", "EmilE", "PalleA", "PalleB", "PalleC", "PalleD", "PalleE", "JonaA", "JonaB", "JonaC", "JonaD", "JonaE"]
         self.attempt_name = "attempt_name"
         self.granularity = 30
+        self.smoothing = 50
         self.step_size_sliding_window = 1
         self.future_target = 1
         self.epochs = 10
@@ -88,7 +86,7 @@ class configuration:
         self.activation= 'relu'
         self.dilation_rate = 2
         self.ppl_amount = 3
-        self.sheets_per_person = 5 
+        self.sheets_per_person = 5
 
     def get_people_iterator(self):
         spp = self.sheets_per_person

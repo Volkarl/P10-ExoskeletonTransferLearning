@@ -80,7 +80,6 @@ def unpack_sessions_no_slice(person_iterator, config: configuration, hyplist: hy
 
 def plot_dataset_comparison(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, flatten_split_sessions):
     hyperparameter_dict[hyplist.use_ref_points] = False
-    hyperparameter_dict[hyplist.smoothing] = 50
 
     train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
     session_features_train, session_truths_train = unpack_sessions_no_slice(train_ppl_file_iter, config, hyplist, hyperparameter_dict)

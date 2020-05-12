@@ -18,12 +18,12 @@ column_ground_truth = columns_data[10]
 
 def process_sheet_no_slice(sheet_title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
     raw_data = load_dataset(sheet_title, config.granularity)
-    _, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict[hyplist.smoothing])
+    _, features, ground_truth = split_data(raw_data, config.granularity, config.smoothing)
     return features, ground_truth
 
 def process_sheet(sheet_title, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, allow_shuffle = True):
     raw_data = load_dataset(sheet_title, config.granularity)
-    indexes, features, ground_truth = split_data(raw_data, config.granularity, hyperparameter_dict[hyplist.smoothing])
+    indexes, features, ground_truth = split_data(raw_data, config.granularity, config.smoothing)
     if(hyperparameter_dict[hyplist.ref_group][hyplist.use_ref_points]): 
         features = calc_ref_features(features, hyperparameter_dict[hyplist.ref_group][hyplist.ref_point1], hyperparameter_dict[hyplist.ref_group][hyplist.ref_point2])
 
