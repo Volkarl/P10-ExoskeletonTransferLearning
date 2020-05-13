@@ -54,7 +54,6 @@ class hyperparameter_list:
             self.optimizer: "rmsprop",
             self.shuffle_group: {
                 self.use_shuffle_buffer: False,
-                self.shuffle_buffer_size: 1 + 17
             },
             self.ref_group: {
                 self.use_ref_points: True,

@@ -93,6 +93,7 @@ class TwoStageTrAdaBoostR2:
         # Caclulate beta value, then update target vs source weight relationship accordingly
         beta = self._beta_binary_search(step, sample_weights, error_vect, 1e-30, is_start_step, start_step_theoretical_sum)
 
+        self.betas_.append(beta)
         print(f"Beta: {beta}")
         # At the first step, beta is tiny, and basically doesn't allow source weights to change. However, target is still allowed to change individual weights through AdaboostR2
 
@@ -166,6 +167,8 @@ class TwoStageTrAdaBoostR2:
         self.errors_ = []
         self.sample_weights_ = []
 
+        self.betas_ = []
+
     def adjust_source_weights(self, step, sample_weights, X, y, X_source, y_source, X_target, y_target):
         # This function is to ensure that the algorithm gets some time to shuffle weights around in our multiple source domains and attempts to find which ones are most similar to target
         # Before we run the "real" two-stage tradaboost and starts scaling up the importance of the target domain, whilst scaling down the importance of the source domain
@@ -198,13 +201,13 @@ class TwoStageTrAdaBoostR2:
 
         for s in range(self.steps):
             model = Ada.AdaBoostR2(self.create_base_estimator_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
-            model.fit(X, y, sample_weights)
+            model.fit(X, y, sample_weights)                                                                     # NOTE Fits amount of times: steps * estimators
             self.sample_weights_.append(np.copy(sample_weights))
             self.models_.append(model)
 
-            error = self.Step1(sample_weights, X_source, y_source, X_target, y_target)
+            error = self.Step1(sample_weights, X_source, y_source, X_target, y_target)                          # NOTE Fits amount of times: steps * estimators * folds
             self.errors_.append(error)
-            sample_weights = self.perform_second_stage_boost(s, X, y, sample_weights)
+            sample_weights = self.perform_second_stage_boost(s, X, y, sample_weights)                           # NOTE Fits amount of times: steps
 
             if sample_weights is None:
                 break

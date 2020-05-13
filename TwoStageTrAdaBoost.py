@@ -236,6 +236,7 @@ class TwoStageTrAdaBoostR2:
 
         self.models_ = []
         self.errors_ = []
+        self.betas_ = []
         for istep in range(self.steps):
             model = Stage2_TrAdaBoostR2(self.base_estimator,
                                         sample_size = self.sample_size,
@@ -319,6 +320,7 @@ class TwoStageTrAdaBoostR2:
 
         # Update the weight vector
         beta = self._beta_binary_search(istep, sample_weight, error_vect, stp = 1e-30)
+        self.betas_.append(beta)
 
         if not istep == self.steps - 1:
             sample_weight[:-self.sample_size[-1]] *= np.power(
