@@ -25,7 +25,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline6(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline5(config, hyplist, hyperparameter_dict)
         
         #loss_lst = []
         #for _ in range(10): loss_lst.append(run_Baseline1(config, hyplist, hyperparameter_dict))
@@ -223,7 +223,8 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
 
     # Create default tradaboost estimator
-    e, s, f = 10, 2, 2
+    # TODO: Halve palles dataset maybe?
+    e, s, f = 30, 10, 5
     print(f"You're about to run with arguments ({e}, {s}, {f}), which equals fitting {(e*s*f) + (e*s) + s} base learners")
     regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=e, steps=s, fold=f) # Test with loss="square" and plot all samples like I do for exoada
     regressor.fit(sliced_X_train, sliced_Y_train)
@@ -315,7 +316,7 @@ hyplist = hyperparameter_list()
 if do_param_optimization: 
     partial_objective = partial(objective, config, hyplist)
     # This is basically function currying. Defines our objective function with the config_dict parameter already present
-    opt.perform_hyperopt(partial_objective, hyplist.space(), 1000)
+    opt.perform_hyperopt(partial_objective, hyplist.space(), 500)
 
 else: 
     objective(config, hyplist, hyplist.best_arguments())

@@ -84,7 +84,13 @@ def load_dataset(sheet_title, granularity):
 
 def split_data(raw_data, granularity, smoothing):
     indexes = range(0, len(raw_data), 1)[::granularity] # Each timestep is a millisecond
-    features = raw_data[columns_features_considered][::granularity].ewm(span=smoothing).mean() 
-    # NOTE: Be aware that this type of smoothing may not be applicable in an online application (where we dont have values before and after)
-    ground_truth = pd.DataFrame(raw_data[column_ground_truth][::granularity]).ewm(span=smoothing).mean()
-    return indexes, features, ground_truth
+    features = raw_data[columns_features_considered].ewm(span=smoothing).mean()
+    features = features.values 
+    gt = raw_data[column_ground_truth].ewm(span=smoothing).mean()
+    gt = gt.values
+
+    lst_avg_f = [avg for avg in [sum(features[i:i+granularity])/granularity for i in range(0,len(features),granularity)] for j in range(granularity)]
+    features = pd.DataFrame(lst_avg_f[::granularity])
+    lst_avg_gt = [avg for avg in [sum(gt[i:i+granularity])/granularity for i in range(0,len(gt),granularity)] for j in range(granularity)]
+    gt = pd.DataFrame(lst_avg_gt[::granularity])
+    return indexes, features, gt
