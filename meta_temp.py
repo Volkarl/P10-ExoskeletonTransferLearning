@@ -25,7 +25,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline5(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline6(config, hyplist, hyperparameter_dict)
         
         #loss_lst = []
         #for _ in range(10): loss_lst.append(run_Baseline1(config, hyplist, hyperparameter_dict))
@@ -225,7 +225,7 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Create default tradaboost estimator
     e, s, f = 10, 2, 2
     print(f"You're about to run with arguments ({e}, {s}, {f}), which equals fitting {(e*s*f) + (e*s) + s} base learners")
-    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=e, steps=s, fold=f, loss="square") # TODO REMOVE SQUARE
+    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=e, steps=s, fold=f) # Test with loss="square" and plot all samples like I do for exoada
     regressor.fit(sliced_X_train, sliced_Y_train)
 
     # Evaluate
@@ -269,10 +269,10 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
 
     # Create Exo-Ada
-    e, s, f, ss = 2, 10, 4, 0
+    e, s, f, ss = 2, 2, 2, 0 #2,2,2,0#2, 10, 4, 0
     print(f"You're about to run with arguments ({e}, {s}, {f}, {ss}), which equals fitting {(e*s*f) + (e*s) + s + (e*ss*f)} base learners") # TODO Maybe reduce SS time complexity
     create_base_estimator_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
-    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=s, steps=s, fold=f, start_steps=ss)
+    regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f, start_steps=ss)
     
     # Initializing weights such that each dataset has a percentage to 1 / n_samples
     sample_weights = np.empty(len(sliced_X_train), dtype=np.float64)
@@ -282,7 +282,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sample_weights[len_A:len_A+len_B] = weight_per_dataset / len_B
     sample_weights[len_A+len_B:len_A+len_B+len_C] = weight_per_dataset / len_C
 
-    regressor.fit(sliced_X_train, sliced_Y_train, sample_weights)
+    regressor.fit(sliced_X_train, sliced_Y_train, sample_weights, weight_per_dataset)
 
     # Plot sample_weights for the datasets across time
     weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C), True, "baseline6")

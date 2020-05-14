@@ -89,9 +89,9 @@ class TwoStageTrAdaBoostR2:
             error_vect /= error_max
         return error_vect
     
-    def Step4(self, step, sample_weights, error_vect, is_start_step = False, start_step_theoretical_sum = 0):
+    def Step4(self, step, sample_weights, error_vect, target_init_weight_percent):
         # Caclulate beta value, then update target vs source weight relationship accordingly
-        beta = self._beta_binary_search(step, sample_weights, error_vect, 1e-30, is_start_step, start_step_theoretical_sum)
+        beta = self._beta_binary_search(step, sample_weights, error_vect, 1e-30, target_init_weight_percent)
 
         self.betas_.append(beta)
         print(f"Beta: {beta}")
@@ -101,29 +101,25 @@ class TwoStageTrAdaBoostR2:
             sample_weights[:-self.sample_size[-1]] *= np.power(beta, (error_vect[:-self.sample_size[-1]]) * self.learning_rate)
         return sample_weights
 
-    def _beta_binary_search(self, istep, sample_weight, error_vect, stp, is_start_step = False, start_step_theoretical_sum = 0):
-        # calculate the specified sum of weight for the target data
-        n_target = self.sample_size[-1]
-        n_source = np.array(self.sample_size).sum() - n_target
+    def _beta_binary_search(self, istep, sample_weight, error_vect, stp, target_init_weight_percent):
+        if istep == self.steps - 1: return 0. # for the last iteration step, beta is 0.
 
-        if is_start_step: 
-            theoretical_sum = start_step_theoretical_sum
-        else:
-            theoretical_sum = n_target/(n_source+n_target) + istep/(self.steps-1)*(1-n_target/(n_source+n_target)) 
+        # calculate the specified sum of weight for the target data
+        # n_source = self.sample_size[0]
+        n_target = self.sample_size[-1]
+
+        # OLD theoretical_sum = n_target/(n_source+n_target) + istep/(self.steps-1)*(1-n_target/(n_source+n_target)) 
+        theoretical_sum = target_init_weight_percent + istep/(self.steps-1)*(1-target_init_weight_percent) 
+            # # So with 3 datasets, where one is target, at index 0 the target stays at 33% importance, and at index 1 it increase to 66%, and index 2 is where we stop
             # The theoretical sum can be written as basically: percent_of_dataset_that_is_target + how_far_we_are_through_total_boosting_steps * percent_of_dataset_that_is_NOT_target
             # This value increases as we get further through out total boosting steps
-
-            # for the last iteration step, beta is 0.
-            if istep == self.steps - 1:
-                beta = 0.
-                return beta
     
         # binary search for beta
         L = 0.
         R = 1.
         beta = (L+R)/2
         sample_weight_ = deepcopy(sample_weight)
-        sample_weight_[:-n_target] *= np.power(beta, (error_vect[:-n_target]) * self.learning_rate)
+        sample_weight_[:-n_target] *= np.power(beta,(error_vect[:-n_target]) * self.learning_rate)
         sample_weight_ /= np.sum(sample_weight_, dtype=np.float64)
         updated_weight_sum = np.sum(sample_weight_[-n_target:], dtype=np.float64)
 
@@ -133,9 +129,7 @@ class TwoStageTrAdaBoostR2:
                 if R > L:
                     beta = (L+R)/2
                     sample_weight_ = deepcopy(sample_weight)
-                    sample_weight_[:-n_target] *= np.power(
-                                beta,
-                                (error_vect[:-n_target]) * self.learning_rate)
+                    sample_weight_[:-n_target] *= np.power(beta,(error_vect[:-n_target]) * self.learning_rate)
                     sample_weight_ /= np.sum(sample_weight_, dtype=np.float64)
                     updated_weight_sum = np.sum(sample_weight_[-n_target:], dtype=np.float64)
                 else:
@@ -149,9 +143,7 @@ class TwoStageTrAdaBoostR2:
                 if L < R:
                     beta = (L+R)/2
                     sample_weight_ = deepcopy(sample_weight)
-                    sample_weight_[:-n_target] *= np.power(
-                                beta,
-                                (error_vect[:-n_target]) * self.learning_rate)
+                    sample_weight_[:-n_target] *= np.power(beta,(error_vect[:-n_target]) * self.learning_rate)
                     sample_weight_ /= np.sum(sample_weight_, dtype=np.float64)
                     updated_weight_sum = np.sum(sample_weight_[-n_target:], dtype=np.float64)
                 else:
@@ -169,7 +161,7 @@ class TwoStageTrAdaBoostR2:
 
         self.betas_ = []
 
-    def adjust_source_weights(self, step, sample_weights, X, y, X_source, y_source, X_target, y_target):
+    def adjust_source_weights(self, step, sample_weights, X, y, X_source, y_source, X_target, y_target, target_init_weight_percent):
         # This function is to ensure that the algorithm gets some time to shuffle weights around in our multiple source domains and attempts to find which ones are most similar to target
         # Before we run the "real" two-stage tradaboost and starts scaling up the importance of the target domain, whilst scaling down the importance of the source domain
         model = Ada.AdaBoostR2(self.create_base_estimator_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
@@ -181,10 +173,10 @@ class TwoStageTrAdaBoostR2:
         # We dont append the model nor the error, we let traditional two-stage tradaboost handle it, since this function is just to ensure our start sample_weights are in a good place
 
         # We run our beta calculations with a somewhat arbitrary value, that increases over its total start steps
-        sample_weights = self.perform_second_stage_boost(0, X, y, sample_weights, True, (0.2 + step) / (self.start_steps + 0.2))
+        sample_weights = self.perform_second_stage_boost(0, X, y, sample_weights, target_init_weight_percent)
 
 
-    def fit(self, X, y, sample_weights=None):
+    def fit(self, X, y, sample_weights=None, target_init_weight_percent = 0):
         Ada.AdaBoostR2.check_parameters(X, self.learning_rate, self.sample_size)
         sample_weights = Ada.AdaBoostR2.init_weights(sample_weights, X)
         self.clear_results()
@@ -194,10 +186,13 @@ class TwoStageTrAdaBoostR2:
         X_target = X[-self.sample_size[-1]:]
         y_target = y[-self.sample_size[-1]:]
 
+        if target_init_weight_percent == 0: 
+            target_init_weight_percent = self.sample_size[1] / (self.sample_size[0] + self.sample_size[1])
+
         for start_step in range(self.start_steps):
             # This function is added by us, to help performance in the case where you are using multiple source domains, rather than one - which is what twostagetradaboost 
             # was designed for. It should only ever be run if learning from multiple source domains to one target domain
-            self.adjust_source_weights(start_step, sample_weights, X, y, X_source, y_source, X_target, y_target)
+            self.adjust_source_weights(start_step, sample_weights, X, y, X_source, y_source, X_target, y_target, target_init_weight_percent)
 
         for s in range(self.steps):
             model = Ada.AdaBoostR2(self.create_base_estimator_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
@@ -207,7 +202,7 @@ class TwoStageTrAdaBoostR2:
 
             error = self.Step1(sample_weights, X_source, y_source, X_target, y_target)                          # NOTE Fits amount of times: steps * estimators * folds
             self.errors_.append(error)
-            sample_weights = self.perform_second_stage_boost(s, X, y, sample_weights)                           # NOTE Fits amount of times: steps
+            sample_weights = self.perform_second_stage_boost(s, X, y, sample_weights, target_init_weight_percent)                           # NOTE Fits amount of times: steps
 
             if sample_weights is None:
                 break
@@ -222,13 +217,13 @@ class TwoStageTrAdaBoostR2:
                 sample_weights /= sample_weight_sum
         return self
 
-    def perform_second_stage_boost(self, step, X, y, sample_weights, is_start_step = False, start_step_theoretical_sum = 0):
+    def perform_second_stage_boost(self, step, X, y, sample_weights, target_init_weight_percent):
         # This is where we are going to change the source weights
         estimator = self.create_base_estimator_fn()
         estimator = self.Step2(sample_weights, X, y, estimator)
         # Update the weight vector
         error_vect = self.Step3(estimator, X, y)
-        sample_weights = self.Step4(step, sample_weights, error_vect, is_start_step, start_step_theoretical_sum)
+        sample_weights = self.Step4(step, sample_weights, error_vect, target_init_weight_percent)
         return sample_weights
 
     def predict(self, X):
