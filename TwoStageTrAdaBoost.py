@@ -237,12 +237,16 @@ class TwoStageTrAdaBoostR2:
         self.models_ = []
         self.errors_ = []
         self.betas_ = []
+        self.sample_weights_ = []
+
         for istep in range(self.steps):
             model = Stage2_TrAdaBoostR2(self.base_estimator,
                                         sample_size = self.sample_size,
                                         n_estimators = self.n_estimators,
                                         learning_rate = self.learning_rate, loss = self.loss,
                                         random_state = self.random_state)
+            self.sample_weights_.append(np.copy(sample_weight))
+            
             model.fit(X, y, sample_weight = sample_weight)
             self.models_.append(model)
             # cv training
@@ -386,7 +390,13 @@ class TwoStageTrAdaBoostR2:
 
     def predict(self, X):
         # select the model with the least CV error
-        print(np.array(self.errors_).argmin()) #TODO Debug this, what does argmin() actually return
+        print(np.array(self.errors_).argmin()) #TODO THERES SOME ERROR HERE, SOMEHOW SIZE OF MODELS ARRAY IS NOT BIG ENOUGH? SO WE GET LIST INDEX OUT OF RANGE. 
         fmodel = self.models_[np.array(self.errors_).argmin()]
         predictions = fmodel.predict(X)
         return predictions
+
+    def get_estimator_info(self):
+        min_error_idx = np.array(self.errors_).argmin()
+        best_ensemble_weights = self.models_[min_error_idx].estimator_weights_
+        ensemble_weights = [model.estimator_weights_ for model in self.models_]
+        return self.errors_, min_error_idx, best_ensemble_weights, ensemble_weights

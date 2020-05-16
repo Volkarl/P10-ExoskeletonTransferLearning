@@ -202,21 +202,21 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Train set: Source is person A + person B. Target is 4/5th of person C.
     # Test set: 1/5th of person C
     people = config.get_people_iterator()
-    source_files = people[0][:5]
-    source_files.extend(people[1][:5])
-    target_files = people[2][:4]
+    source_A_files = people[0][:5]
+    source_B_files = people[1][:5]
+    target_C_files = people[2][:4]
     test_files = people[2][4:]
 
-    sessions_source = unpack_sessions(source_files, config, hyplist, hyperparameter_dict, True)
-    sessions_target = unpack_sessions(target_files, config, hyplist, hyperparameter_dict, True)
-    sliced_X_source, sliced_Y_source = flatten_split_sessions(sessions_source)
-    sliced_X_target, sliced_Y_target = flatten_split_sessions(sessions_target)
+    sessions_A_source = unpack_sessions(source_A_files, config, hyplist, hyperparameter_dict, True)
+    sessions_B_source = unpack_sessions(source_B_files, config, hyplist, hyperparameter_dict, True)
+    sessions_C_target = unpack_sessions(target_C_files, config, hyplist, hyperparameter_dict, True)
+    sliced_X_source_A, sliced_Y_source_A = flatten_split_sessions(sessions_A_source)
+    sliced_X_source_B, sliced_Y_source_B = flatten_split_sessions(sessions_B_source)
+    sliced_X_target_C, sliced_Y_target_C = flatten_split_sessions(sessions_C_target)
 
     sliced_X_train, sliced_Y_train = [], []
-    sliced_X_train.extend(sliced_X_source)
-    sliced_X_train.extend(sliced_X_target)
-    sliced_Y_train.extend(sliced_Y_source)
-    sliced_Y_train.extend(sliced_Y_target)
+    for lst in [sliced_X_source_A, sliced_X_source_B, sliced_X_target_C] : sliced_X_train.extend(lst)
+    for lst in [sliced_Y_source_A, sliced_Y_source_B, sliced_Y_target_C] : sliced_Y_train.extend(lst)
     sliced_X_train = np.array(sliced_X_train)
     sliced_X_train = make_2d_array(sliced_X_train) # Reshape to work with our DecisionTreeRegressor
     sliced_Y_train = np.array(sliced_Y_train)
@@ -224,10 +224,19 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
 
     # Create default tradaboost estimator
     # TODO: Halve palles dataset maybe?
-    e, s, f = 30, 10, 5
+    e, s, f = 2, 2, 2
     print(f"You're about to run with arguments ({e}, {s}, {f}), which equals fitting {(e*s*f) + (e*s) + s} base learners")
-    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source), len(sliced_X_target)], n_estimators=e, steps=s, fold=f) # Test with loss="square" and plot all samples like I do for exoada
+    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f) # Test with loss="square" and plot all samples like I do for exoada
     regressor.fit(sliced_X_train, sliced_Y_train)
+
+    # Plot sample_weights for the datasets across time
+    weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C), True, "baseline5")
+
+    errors, idx, bew, ew = regressor.get_estimator_info()
+    print(f"Errors {errors}")
+    print(f"Best idx {idx}")
+    print(f"Weights of best estimator {bew}")
+    stacked_histogram(np.array(ew), np.array(errors), do_savefig=True, savename="baseline6")
 
     # Evaluate
     sessions_test = unpack_sessions(test_files, config, hyplist, hyperparameter_dict, False)
@@ -239,8 +248,8 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Plotting
     errors = regressor.errors_
     ensemble_weights = [model.estimator_weights_ for model in regressor.models_]
-    stacked_histogram(np.array(ensemble_weights), np.array(errors), do_savefig=False, savename="baseline5")
-    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "TwoStageTrAdaBoostR2", "x", "y", "TwoStageTrAdaBoostR2 Predictions", False, "baseline5")
+    stacked_histogram(np.array(ensemble_weights), np.array(errors), do_savefig=True, savename="baseline5")
+    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "TwoStageTrAdaBoostR2", "x", "y", "TwoStageTrAdaBoostR2 Predictions", True, "baseline5")
 
     return mean_absolute_error(sliced_Y_test, prediction)
 
