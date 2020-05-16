@@ -25,7 +25,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline5(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline2(config, hyplist, hyperparameter_dict)
         
         #loss_lst = []
         #for _ in range(10): loss_lst.append(run_Baseline1(config, hyplist, hyperparameter_dict))
@@ -106,11 +106,12 @@ def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparam
     # TODO: For cleanup maybe gc.collect as well?
     return loss
 
-def flatten_split_sessions(sessions):
+def flatten_split_sessions(sessions, keep_dataset_percent = 1.0):
     sliced_X, sliced_Y = [], []
     for session in sessions: # Flatten the outer lists
-        sliced_X.extend(session.x)
-        sliced_Y.extend(session.y)
+        stop_idx = int(len(session.x) * keep_dataset_percent)
+        sliced_X.extend(session.x[:stop_idx])
+        sliced_Y.extend(session.y[:stop_idx])
     return np.array(sliced_X), np.array(sliced_Y) # make into numpy arrays, such that we have a shape property
 
 def unpack_sessions(files, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, allow_shuffle):
@@ -162,15 +163,24 @@ def run_Baseline2(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Test set: 1/5th of person C
 
     people = config.get_people_iterator()
-    train_files = people[0][:5]
-    train_files.extend(people[1][:5])
-    train_files.extend(people[2][:4])
+    A_files = people[0][:5]
+    B_files = people[1][:5]
+    C_files = people[2][:4]
     test_files = people[2][4:]
 
-    train_sessions = unpack_sessions(train_files, config, hyplist, hyperparameter_dict, True)
-    sliced_X_train, sliced_Y_train = flatten_split_sessions(train_sessions)
+    sessions_A = unpack_sessions(A_files, config, hyplist, hyperparameter_dict, True)
+    sessions_B = unpack_sessions(B_files, config, hyplist, hyperparameter_dict, True)
+    sessions_C = unpack_sessions(C_files, config, hyplist, hyperparameter_dict, True)
+    sliced_X_A, sliced_Y_A = flatten_split_sessions(sessions_A)
+    sliced_X_B, sliced_Y_B = flatten_split_sessions(sessions_B, 0.6)
+    sliced_X_C, sliced_Y_C = flatten_split_sessions(sessions_C)
 
-    model = cnn.Model_CNN(train_sessions[0].datashape, config, hyplist, hyperparameter_dict)
+    sliced_X_train, sliced_Y_train = [], []
+    for lst in [sliced_X_A, sliced_X_B, sliced_X_C] : sliced_X_train.extend(lst)
+    for lst in [sliced_Y_A, sliced_Y_B, sliced_Y_C] : sliced_Y_train.extend(lst)
+    sliced_X_train, sliced_Y_train = np.array(sliced_X_train), np.array(sliced_Y_train)
+
+    model = cnn.Model_CNN(sessions_A[0].datashape, config, hyplist, hyperparameter_dict)
     model.fit_ada(sliced_X_train, sliced_Y_train)
 
     test_sessions = unpack_sessions(test_files, config, hyplist, hyperparameter_dict, False)
@@ -211,7 +221,7 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     sessions_B_source = unpack_sessions(source_B_files, config, hyplist, hyperparameter_dict, True)
     sessions_C_target = unpack_sessions(target_C_files, config, hyplist, hyperparameter_dict, True)
     sliced_X_source_A, sliced_Y_source_A = flatten_split_sessions(sessions_A_source)
-    sliced_X_source_B, sliced_Y_source_B = flatten_split_sessions(sessions_B_source)
+    sliced_X_source_B, sliced_Y_source_B = flatten_split_sessions(sessions_B_source, 0.6)
     sliced_X_target_C, sliced_Y_target_C = flatten_split_sessions(sessions_C_target)
 
     sliced_X_train, sliced_Y_train = [], []
@@ -268,7 +278,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sessions_B_source = unpack_sessions(source_B_files, config, hyplist, hyperparameter_dict, True)
     sessions_C_target = unpack_sessions(target_C_files, config, hyplist, hyperparameter_dict, True)
     sliced_X_source_A, sliced_Y_source_A = flatten_split_sessions(sessions_A_source)
-    sliced_X_source_B, sliced_Y_source_B = flatten_split_sessions(sessions_B_source)
+    sliced_X_source_B, sliced_Y_source_B = flatten_split_sessions(sessions_B_source, 0.6)
     sliced_X_target_C, sliced_Y_target_C = flatten_split_sessions(sessions_C_target)
 
     sliced_X_train, sliced_Y_train = [], []
@@ -280,7 +290,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
 
     # Create Exo-Ada
     e, s, f, ss = 2, 2, 2, 0 #2,2,2,0#2, 10, 4, 0
-    print(f"You're about to run with arguments ({e}, {s}, {f}, {ss}), which equals fitting {(e*s*f) + (e*s) + s + (e*ss*f)} base learners") # TODO Maybe reduce SS time complexity
+    print(f"You're about to run with arguments ({e}, {s}, {f}, {ss}), which equals fitting {(e*s*f) + (e*s) + s + (e*ss*f)} base learners")
     create_base_estimator_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
     regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f, start_steps=ss)
     
