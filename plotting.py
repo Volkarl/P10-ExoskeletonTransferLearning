@@ -16,7 +16,10 @@ def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_na
     else: plt.show()
 
 def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'lime', 'purple', 'crimson'], do_savefig = False, savename = None):
-    colors = colors[:stacked_hist_values.shape[1]] # Shortens the color array, if it's longer than how many values we have to stack for each column of our histogram
+    cols = []
+    for i in range(stacked_hist_values.shape[1]):
+        cols.append(colors[i % len(colors)])
+    colors = cols
     X = range(stacked_hist_values.shape[0])
     accuracies = [1 - er for er in errors]
 
