@@ -233,8 +233,7 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
 
     # Create default tradaboost estimator
-    # TODO: Halve palles dataset maybe?
-    e, s, f = 2, 2, 2
+    e, s, f = 20, 3, 2
     print(f"You're about to run with arguments ({e}, {s}, {f}), which equals fitting {(e*s*f) + (e*s) + s} base learners")
     regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f) # Test with loss="square" and plot all samples like I do for exoada
     regressor.fit(sliced_X_train, sliced_Y_train)
@@ -246,7 +245,7 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     print(f"Errors {errors}")
     print(f"Best idx {idx}")
     print(f"Weights of best estimator {bew}")
-    stacked_histogram(np.array(ew), np.array(errors), do_savefig=True, savename="baseline6")
+    stacked_histogram(np.array(ew), np.array(errors), do_savefig=True, savename="baseline5")
 
     # Evaluate
     sessions_test = unpack_sessions(test_files, config, hyplist, hyperparameter_dict, False)
@@ -255,12 +254,7 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
     prediction = regressor.predict(sliced_X_test)
 
-    # Plotting
-    errors = regressor.errors_
-    ensemble_weights = [model.estimator_weights_ for model in regressor.models_]
-    stacked_histogram(np.array(ensemble_weights), np.array(errors), do_savefig=True, savename="baseline5")
-    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "TwoStageTrAdaBoostR2", "x", "y", "TwoStageTrAdaBoostR2 Predictions", True, "baseline5")
-
+    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "Exo-Ada", "x", "y", "2-Stage TrAdaBoost", True, "baseline5")
     return mean_absolute_error(sliced_Y_test, prediction)
 
 def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
@@ -319,7 +313,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
     prediction = regressor.predict(sliced_X_test)
     
-    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "Exo-Ada", "x", "y", "Exo-Ada Predictions", True, "baseline6")
+    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "Exo-Ada", "x", "y", "Exo-Ada", True, "baseline6")
     return mean_absolute_error(sliced_Y_test, prediction)
 
 def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
@@ -327,7 +321,7 @@ def run_plotting_experiments(config: configuration, hyplist: hyperparameter_list
     return 0
 
 
-do_param_optimization = False
+do_param_optimization = True
 
 config = configuration()
 hyplist = hyperparameter_list()
