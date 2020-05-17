@@ -31,7 +31,7 @@ print("Set breakpoint here")
 print("Set breakpoint here")
 
 print("PRINT BEST TRIALS")
-myitems = [(trial["result"]["loss"], str(trial["misc"]["vals"])) for trial in trials.trials]
+myitems = [(trial["result"]["loss"], str(trial["misc"]["vals"])) for trial in trials.trials if trial["result"]["status"] == "ok"]
 myitems.sort(key=lambda tup: tup[0])
 for item in myitems[:10]:
     print("--------------------------\n")

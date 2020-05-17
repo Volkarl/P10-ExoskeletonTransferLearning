@@ -50,20 +50,20 @@ class hyperparameter_list:
 
     def best_arguments(self): # This is hard coded to whatever hyperopt found
         return {
-            self.filters: 1 + 94,
-            self.optimizer: "rmsprop",
+            self.filters: 1 + 93,
+            self.optimizer: "adam",
             self.shuffle_group: {
                 self.use_shuffle_buffer: False,
             },
             self.ref_group: {
                 self.use_ref_points: True,
-                self.ref_point1: 0,
-                self.ref_point2: 6
+                self.ref_point1: 3,
+                self.ref_point2: 7
             },
             self.dilation_group: {
                 self.use_dilation: True,
-                self.layer_amount: 2 + 2,
-                self.past_history: 150 + 123,
+                self.layer_amount: 2 + 3,
+                self.past_history: 150 + 117,
                 self.kernel_size: 2
             }
         }
