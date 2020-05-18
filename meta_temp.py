@@ -25,18 +25,25 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline5(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline2(config, hyplist, hyperparameter_dict)
         
-        #loss_lst = []
-        #for _ in range(10): loss_lst.append(run_Baseline1(config, hyplist, hyperparameter_dict))
-        #print(f"Losses {loss_lst}")
-        #print(f"Mean {np.mean(loss_lst)}")
-        #loss = np.mean(loss_lst)
-
-        #loss = run_cnn(config, hyplist, hyperparameter_dict)
-        #loss = run_ensemble(config, hyplist, hyperparameter_dict)
-        #loss = run_AdaBoostR2(config, hyplist, hyperparameter_dict)
-        #loss = run_wrapper(config, hyplist, hyperparameter_dict)
+        #loss_lst_4 = []
+        #loss_lst_3 = []
+        #loss_lst_2 = []
+        #loss_lst_1 = []
+        #for _ in range(3): 
+        #    loss_lst_4.append(run_Baseline1(config, hyplist, hyperparameter_dict, 4))
+        #for _ in range(3): 
+        #    loss_lst_3.append(run_Baseline1(config, hyplist, hyperparameter_dict, 3))
+        #for _ in range(3): 
+        #    loss_lst_2.append(run_Baseline1(config, hyplist, hyperparameter_dict, 2))
+        #for _ in range(3): 
+        #    loss_lst_1.append(run_Baseline1(config, hyplist, hyperparameter_dict, 1))
+        #print(f"Loss_Lst_4 {loss_lst_4}, Mean {np.mean(loss_lst_4)}")
+        #print(f"Loss_Lst_3 {loss_lst_3}, Mean {np.mean(loss_lst_3)}")
+        #print(f"Loss_Lst_2 {loss_lst_2}, Mean {np.mean(loss_lst_2)}")
+        #print(f"Loss_Lst_1 {loss_lst_1}, Mean {np.mean(loss_lst_1)}")
+        
         print(loss)
         return { "loss": loss, 
                  "status": STATUS_OK }
@@ -140,12 +147,12 @@ def run_AdaBoostR2(config: configuration, hyplist: hyperparameter_list, hyperpar
     predictions = ada_model.predict(sliced_X)
     return ada_model.evaluate(predictions, sliced_Y)
 
-def run_Baseline1(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+def run_Baseline1(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, test_sheets = 4):
     # CNN on C only
     # Train set: 4/5th of person C
     # Test set: 1/5th of person C
     people = config.get_people_iterator()
-    train_files = people[2][:4]
+    train_files = people[2][:test_sheets]
     test_files = people[2][4:]
 
     train_sessions = unpack_sessions(train_files, config, hyplist, hyperparameter_dict, True)
@@ -157,7 +164,7 @@ def run_Baseline1(config: configuration, hyplist: hyperparameter_list, hyperpara
     model.fit_ada(sliced_X_train, sliced_Y_train)
     return model.evaluate_nonbatched(sliced_X_test, sliced_Y_test)
 
-def run_Baseline2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+def run_Baseline2(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, test_sheets = 4):
     # CNN on all data
     # Train set: person A, B and 4/5ths of C
     # Test set: 1/5th of person C
@@ -165,7 +172,7 @@ def run_Baseline2(config: configuration, hyplist: hyperparameter_list, hyperpara
     people = config.get_people_iterator()
     A_files = people[0][:5]
     B_files = people[1][:5]
-    C_files = people[2][:4]
+    C_files = people[2][:test_sheets] #[2][:4]
     test_files = people[2][4:]
 
     sessions_A = unpack_sessions(A_files, config, hyplist, hyperparameter_dict, True)
