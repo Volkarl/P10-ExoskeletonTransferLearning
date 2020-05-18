@@ -390,7 +390,7 @@ class TwoStageTrAdaBoostR2:
 
     def predict(self, X):
         # select the model with the least CV error
-        print(np.array(self.errors_).argmin()) #TODO THERES SOME ERROR HERE, SOMEHOW SIZE OF MODELS ARRAY IS NOT BIG ENOUGH? SO WE GET LIST INDEX OUT OF RANGE. 
+        print(np.array(self.errors_).argmin())
         fmodel = self.models_[np.array(self.errors_).argmin()]
         predictions = fmodel.predict(X)
         return predictions

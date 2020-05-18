@@ -233,9 +233,9 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
 
     # Create default tradaboost estimator
-    e, s, f = 20, 3, 2
+    e, s, f = 2, 7, 2
     print(f"You're about to run with arguments ({e}, {s}, {f}), which equals fitting {(e*s*f) + (e*s) + s} base learners")
-    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f) # Test with loss="square" and plot all samples like I do for exoada
+    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f, loss="exponential") # Test with loss="square" and plot all samples like I do for exoada
     regressor.fit(sliced_X_train, sliced_Y_train)
 
     # Plot sample_weights for the datasets across time
@@ -254,7 +254,7 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_test = np.concatenate(sliced_Y_test, axis=0) # Flatten inner lists that contain one element each
     prediction = regressor.predict(sliced_X_test)
 
-    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "Exo-Ada", "x", "y", "2-Stage TrAdaBoost", True, "baseline5")
+    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "2-Stage TrAdaBoost", "x", "y", "2-Stage TrAdaBoost", True, "baseline5")
     return mean_absolute_error(sliced_Y_test, prediction)
 
 def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
@@ -283,7 +283,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
 
     # Create Exo-Ada
-    e, s, f, ss = 2, 2, 2, 0 #2,2,2,0#2, 10, 4, 0
+    e, s, f, ss = 10, 10, 2, 0 #2,2,2,0#2, 10, 4, 0
     print(f"You're about to run with arguments ({e}, {s}, {f}, {ss}), which equals fitting {(e*s*f) + (e*s) + s + (e*ss*f)} base learners")
     create_base_estimator_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
     regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f, start_steps=ss)
