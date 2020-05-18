@@ -148,6 +148,7 @@ def plot_target_accuracy_comparison():
     plt.plot(x, b6, "m*-", markerfacecolor='none', label="Exo-Ada", linewidth=1)
     plt.xlabel("Person C Sessions")
     plt.ylabel("MAE")
+    plt.xticks(np.arange(min(x), max(x) + 1, 1.0))
     plt.title("Robustness to Size of the Target Dataset")
     plt.legend(frameon=False, markerfirst=False)
 
