@@ -15,6 +15,18 @@ def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_na
     if do_savefig: fig.savefig(f'comp_{savename}.png')
     else: plt.show()
 
+def plot_multiple_comparisons(y_lists, labels, colors, xlabel, ylabel, title):
+    plt.figure()
+
+    for i in range(len(y_lists)):
+        plt.plot(y_lists[i], label=labels[i], color=colors[i], linewidth=1)
+    
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.show()
+
 def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'lime', 'purple', 'crimson'], do_savefig = False, savename = None):
     cols = []
     for i in range(stacked_hist_values.shape[1]):
@@ -162,4 +174,4 @@ def plot_target_accuracy_comparison():
     print("end")
 
 
-plot_target_accuracy_comparison()
+#plot_target_accuracy_comparison()

@@ -205,4 +205,4 @@ class AdaBoostR2:
         return np.array([predictions[est][idx] for idx, est in enumerate(median_estimators)])
 
     def evaluate(self, y_predictions, y_ground_truth):
-        return mean_absolute_error(y_predictions, y_ground_truth) # TODO Maybe try out mean_squared_error(y_predictions, y_ground_truth) for fun?
+        return mean_absolute_error(y_predictions, y_ground_truth)

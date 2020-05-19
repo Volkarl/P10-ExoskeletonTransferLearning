@@ -25,7 +25,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline2(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline4(config, hyplist, hyperparameter_dict)
         
         #loss_lst_4 = []
         #loss_lst_3 = []
@@ -93,25 +93,6 @@ def fit_cnn_with_person(idx, length, person, model):
 def setup_windows_linux_pathing():
     gitdir = "P10-ExoskeletonTransferLearning"
     if(exists(gitdir)): chdir(gitdir) # Change dir unless we're already inside it. Necessary for linux v windows execution
-
-def run_ensemble(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict): 
-    train_ppl_file_iter, test_ppl_file_iter = config.get_people_iterators()
-    model = Model_Ensemble_CNN(find_datashape(config, hyplist, hyperparameter_dict), config.train_ppl_amount, config, hyplist, hyperparameter_dict)
-
-    for idx, person in enumerate(train_ppl_file_iter):
-        print(f"PERSON {idx + 1} of {config.train_ppl_amount}")
-        sessions = [data.process_sheet(sheet, config, hyplist, hyperparameter_dict) for sheet in person]
-        model.fit(idx, sessions)
-
-    loss = 0
-    for idx, person in enumerate(test_ppl_file_iter):
-        sessions = [data.process_sheet(sheet, config, hyplist, hyperparameter_dict) for sheet in person]
-        loss = model.evaluate(sessions)
-
-    del model # Remove all references from the model, such that the garbage collector claims it
-    clear_session() # Clear the keras backend dataflow graph, as to not fill up memory
-    # TODO: For cleanup maybe gc.collect as well?
-    return loss
 
 def flatten_split_sessions(sessions, keep_dataset_percent = 1.0):
     sliced_X, sliced_Y = [], []
@@ -195,19 +176,47 @@ def run_Baseline2(config: configuration, hyplist: hyperparameter_list, hyperpara
     return model.evaluate_nonbatched(sliced_X_test, sliced_Y_test)
 
 def run_Baseline3(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
-    # NOTE: IS THIS ONE EVEN NEEDED?
-    # Ensemble model of CNN
-    # Train set: CNN A = person A, CNN B = person B and CNN C = 4/5ths of C
-    # Test set: 1/5th of person C
-
-    return 0
-
-def run_Baseline4(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):
+    # NOTE: Not needed
     # CNN with layer fine-tuning
     # Train set: 9/10th of person A, 9/10th of person B -> Then fine tune last layers on 4/5ths of person C
     # Test set: 1/10th of person A, 1/10th of person B -> After fine tuning of the last layers, test on 1/5ths of person C
 
     return 0
+
+def run_Baseline4(config: configuration, hyplist: hyperparameter_list, hyperparameter_dict, test_sheets = 4):
+    # Ensemble model of CNN
+    # Train set: CNN A = person A, CNN B = person B and CNN C = 4/5ths of C
+    # Test set: 1/5th of person C
+
+    people = config.get_people_iterator()
+    A_files = people[0][:5]
+    B_files = people[1][:5]
+    C_files = people[2][:test_sheets]
+    test_files = people[2][4:]
+
+    sessions_A = unpack_sessions(A_files, config, hyplist, hyperparameter_dict, True)
+    sessions_B = unpack_sessions(B_files, config, hyplist, hyperparameter_dict, True)
+    sessions_C = unpack_sessions(C_files, config, hyplist, hyperparameter_dict, True)
+    sliced_X_A, sliced_Y_A = flatten_split_sessions(sessions_A)
+    sliced_X_B, sliced_Y_B = flatten_split_sessions(sessions_B, 0.6)
+    sliced_X_C, sliced_Y_C = flatten_split_sessions(sessions_C)
+
+    model_A = cnn.Model_CNN(sessions_A[0].datashape, config, hyplist, hyperparameter_dict)
+    model_B = cnn.Model_CNN(sessions_B[0].datashape, config, hyplist, hyperparameter_dict)
+    model_C = cnn.Model_CNN(sessions_C[0].datashape, config, hyplist, hyperparameter_dict)
+    
+    model_A.fit_ada(sliced_X_A, sliced_Y_A)
+    model_B.fit_ada(sliced_X_B, sliced_Y_B)
+    model_C.fit_ada(sliced_X_C, sliced_Y_C)
+
+    ensemble = Model_Ensemble_CNN([model_A, model_B, model_C])
+
+    test_sessions = unpack_sessions(test_files, config, hyplist, hyperparameter_dict, False)
+    sliced_X_test, sliced_Y_test = flatten_split_sessions(test_sessions)
+
+    prediction = ensemble.predict(sliced_X_test, sliced_Y_test, False)
+    make_simple_comparison_plot(sliced_Y_test, "Person C Test Set", prediction, "Ensemble CNN", "x", "y", "Ensemble CNN", False, "ens")
+    return mean_absolute_error(sliced_Y_test, prediction)
 
 def make_2d_array(dataset):
     # Reshape 3D-array (slices x observations x samples) into 2D-array (slices x samples-samples-samples-samples-...)
@@ -242,7 +251,7 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Create default tradaboost estimator
     e, s, f = 2, 7, 2
     print(f"You're about to run with arguments ({e}, {s}, {f}), which equals fitting {(e*s*f) + (e*s) + s} base learners")
-    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f, loss="exponential") # Test with loss="square" and plot all samples like I do for exoada
+    regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f)
     regressor.fit(sliced_X_train, sliced_Y_train)
 
     # Plot sample_weights for the datasets across time
