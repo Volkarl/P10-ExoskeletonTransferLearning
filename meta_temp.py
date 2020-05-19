@@ -32,13 +32,13 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
         #loss_lst_2 = []
         #loss_lst_1 = []
         #for _ in range(3): 
-        #    loss_lst_4.append(run_Baseline1(config, hyplist, hyperparameter_dict, 4))
+        #    loss_lst_4.append(run_Baseline4(config, hyplist, hyperparameter_dict, 4))
         #for _ in range(3): 
-        #    loss_lst_3.append(run_Baseline1(config, hyplist, hyperparameter_dict, 3))
+        #    loss_lst_3.append(run_Baseline4(config, hyplist, hyperparameter_dict, 3))
         #for _ in range(3): 
-        #    loss_lst_2.append(run_Baseline1(config, hyplist, hyperparameter_dict, 2))
+        #    loss_lst_2.append(run_Baseline4(config, hyplist, hyperparameter_dict, 2))
         #for _ in range(3): 
-        #    loss_lst_1.append(run_Baseline1(config, hyplist, hyperparameter_dict, 1))
+        #    loss_lst_1.append(run_Baseline4(config, hyplist, hyperparameter_dict, 1))
         #print(f"Loss_Lst_4 {loss_lst_4}, Mean {np.mean(loss_lst_4)}")
         #print(f"Loss_Lst_3 {loss_lst_3}, Mean {np.mean(loss_lst_3)}")
         #print(f"Loss_Lst_2 {loss_lst_2}, Mean {np.mean(loss_lst_2)}")
