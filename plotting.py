@@ -1,9 +1,21 @@
 import matplotlib.pyplot as plt
-from config_classes import hyperparameter_list, configuration
 import numpy as np
+import pickle
+
 from data_manager_component import process_sheet_no_slice
+from config_classes import hyperparameter_list, configuration
+
+def read_saved_data(savename):
+        comp_data = pickle.load(open(f"comp_data_{savename}.p", "rb"))
+        hist_data = pickle.load(open(f"hist_data_{savename}.p", "rb"))
+        weights_data = pickle.load(open(f"weights_data_{savename}.p", "rb"))
+        print("Stop")
+
+# read_saved_data("baseline5")
 
 def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_name, title = None, do_savefig = False, savename = None):
+    pickle.dump( { y1_name : y1, y2_name : y2 } , open(f"comp_data_{savename}.p", "wb"))
+    
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
     ax.plot(y1, c="b", label=y1_name, linewidth=0.5)
@@ -28,6 +40,9 @@ def plot_multiple_comparisons(y_lists, labels, colors, xlabel, ylabel, title):
     plt.show()
 
 def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'lime', 'purple', 'crimson'], do_savefig = False, savename = None):
+    pickle.dump( { "stacked_hist_values" : stacked_hist_values, "errors" : errors } , open(f"hist_data_{savename}.p", "wb"))
+    
+    
     cols = []
     for i in range(stacked_hist_values.shape[1]):
         cols.append(colors[i % len(colors)])
@@ -63,6 +78,8 @@ def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 
 #stacked_histogram(ar, er, do_savefig=True, savename="asfsa")
 
 def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C, do_savefig = False, savename = None):
+    pickle.dump(sample_weights_across_steps, open(f"weights_data_{savename}.p", "wb"))
+    
     y_A, y_B, y_C = [], [], []
     for sample_weights in sample_weights_across_steps:
         sw_A, sw_B, sw_C = sample_weights[:len_A], sample_weights[len_A:len_A+len_B], sample_weights[len_A+len_B:]

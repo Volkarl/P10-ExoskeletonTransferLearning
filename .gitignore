@@ -128,3 +128,9 @@ dmypy.json
 trials.p
 
 *.png
+
+weights_data_baseline5.p
+
+hist_data_baseline5.p
+
+comp_data_baseline5.p
