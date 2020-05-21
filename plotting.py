@@ -170,9 +170,9 @@ def plot_target_accuracy_comparison():
     b2 = [ 0.18753941475931857, 0.17503625891662256, 0.17703442328322402, 0.16213747466457573 ]
     # b3 
     b4 = [ 0.23851535677450605, 0.2701332927192523, 0.2126576669858217, 0.18190372315629796 ]
+    b5 = [ 0.26691386234082237, 0.16560964867924088, 0.1424645339127848, 0.13751412682697559 ]
 
     # dummy values below
-    b5 = [ 0.42, 0.31, 0.28, 0.16 ]
     b6 = [ 0.19, 0.18, 0.17, 0.16 ]
 
     plt.figure()
@@ -180,7 +180,7 @@ def plot_target_accuracy_comparison():
     plt.plot(x, b2, "g+--", markerfacecolor='none', label="CNN_Big", linewidth=1)
     plt.plot(x, b4, "r>-.", markerfacecolor='none', label="Ensemble", linewidth=1)
     plt.plot(x, b5, "cs--", markerfacecolor='none', label="2-Stage TrAdaBoost", linewidth=1)
-    plt.plot(x, b6, "m*-", markerfacecolor='none', label="Exo-Ada", linewidth=1)
+    #plt.plot(x, b6, "m*-", markerfacecolor='none', label="Exo-Ada", linewidth=1)
     plt.xlabel("Person C Sessions")
     plt.ylabel("MAE")
     plt.xticks(np.arange(min(x), max(x) + 1, 1.0))
