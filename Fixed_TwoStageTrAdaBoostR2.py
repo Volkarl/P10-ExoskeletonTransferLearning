@@ -86,7 +86,8 @@ class TwoStageTrAdaBoostR2:
     
     def Step3(self, estimator, X, Y):
         y_predict = estimator.predict(X)
-        y_predict = np.concatenate(y_predict, axis=0) # Flatten inner list
+        if isinstance(y_predict[0], np.ndarray):
+            y_predict = np.concatenate(y_predict, axis=0) # Flatten inner list, if its lots of 1 element lists - which is the case when we use a keras model rather than an skelearn model
         error_vect = np.array([np.abs(y - y_truth) for y, y_truth in zip(y_predict, Y)])
         error_max = error_vect.max()
 
@@ -166,7 +167,7 @@ class TwoStageTrAdaBoostR2:
 
         self.betas_ = []
 
-    def adjust_source_weights(self, step, sample_weights, X, y, X_source, y_source, X_target, y_target, target_init_weight_percent):
+    def adjust_source_weights(self, step, sample_weights, X, y, X_source, y_source, X_target, y_target, target_init_weight_percent, adjust_source_with_cnn):
         # This function is to ensure that the algorithm gets some time to shuffle weights around in our multiple source domains and attempts to find which ones are most similar to target
         # Before we run the "real" two-stage tradaboost and starts scaling up the importance of the target domain, whilst scaling down the importance of the source domain
         model = Ada.AdaBoostR2(self.basetrees_fn, self.basecnn_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
@@ -178,10 +179,10 @@ class TwoStageTrAdaBoostR2:
         # We dont append the model nor the error, we let traditional two-stage tradaboost handle it, since this function is just to ensure our start sample_weights are in a good place
 
         # We run our beta calculations with a somewhat arbitrary value, that increases over its total start steps
-        sample_weights = self.perform_second_stage_boost(0, X, y, sample_weights, target_init_weight_percent)
+        sample_weights = self.perform_second_stage_boost(0, X, y, sample_weights, target_init_weight_percent, adjust_source_with_cnn)
 
 
-    def fit(self, X, y, sample_weights=None, target_init_weight_percent = 0):
+    def fit(self, X, y, sample_weights=None, target_init_weight_percent = 0, adjust_source_with_cnn = True):
         Ada.AdaBoostR2.check_parameters(X, self.learning_rate, self.sample_size)
         sample_weights = Ada.AdaBoostR2.init_weights(sample_weights, X)
         self.clear_results()
@@ -197,7 +198,7 @@ class TwoStageTrAdaBoostR2:
         for start_step in range(self.start_steps):
             # This function is added by us, to help performance in the case where you are using multiple source domains, rather than one - which is what twostagetradaboost 
             # was designed for. It should only ever be run if learning from multiple source domains to one target domain
-            self.adjust_source_weights(start_step, sample_weights, X, y, X_source, y_source, X_target, y_target, target_init_weight_percent)
+            self.adjust_source_weights(start_step, sample_weights, X, y, X_source, y_source, X_target, y_target, target_init_weight_percent, adjust_source_with_cnn)
 
         for s in range(self.steps):
             model = Ada.AdaBoostR2(self.basetrees_fn, self.basecnn_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
@@ -207,7 +208,7 @@ class TwoStageTrAdaBoostR2:
 
             error = self.Step1(sample_weights, X_source, y_source, X_target, y_target)                          # NOTE Fits amount of times: steps * estimators * folds
             self.errors_.append(error)
-            sample_weights = self.perform_second_stage_boost(s, X, y, sample_weights, target_init_weight_percent)                           # NOTE Fits amount of times: steps
+            sample_weights = self.perform_second_stage_boost(s, X, y, sample_weights, target_init_weight_percent, adjust_source_with_cnn)  # NOTE Fits amount of times: steps
 
             if sample_weights is None:
                 break
@@ -222,9 +223,13 @@ class TwoStageTrAdaBoostR2:
                 sample_weights /= sample_weight_sum
         return self
 
-    def perform_second_stage_boost(self, step, X, y, sample_weights, target_init_weight_percent):
+    def perform_second_stage_boost(self, step, X, y, sample_weights, target_init_weight_percent, adjust_source_with_cnn):
         # This is where we are going to change the source weights
-        estimator = self.basecnn_fn()
+        if adjust_source_with_cnn: 
+            estimator = self.basecnn_fn()
+        else: 
+            estimator = self.basetrees_fn()
+
         estimator = self.Step2(sample_weights, X, y, estimator)
         # Update the weight vector
         error_vect = self.Step3(estimator, X, y)

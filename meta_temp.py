@@ -308,7 +308,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sample_weights[len_A:len_A+len_B] = weight_per_dataset / len_B
     sample_weights[len_A+len_B:len_A+len_B+len_C] = weight_per_dataset / len_C
 
-    regressor.fit(sliced_X_train, sliced_Y_train, sample_weights, weight_per_dataset)
+    regressor.fit(sliced_X_train, sliced_Y_train, sample_weights, weight_per_dataset, False) #TODO TRY WITH TRUE
 
     # Plot sample_weights for the datasets across time
     weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C), True, "baseline6")
