@@ -191,8 +191,8 @@ class AdaBoostR2:
     def predict(self, X):
         # Evaluate predictions of all estimators
         predictions = [est.predict(X) for est in self.estimators_]
-        if isinstance(predictions[0], np.ndarray):
-            predictions = [np.concatenate(est, axis=0) for est in predictions] # Flatten inner array of predictions, such that we have predictions[] > estimators[] > samples[] > ground_truth
+        for idx, est in enumerate(predictions):
+            if isinstance(est[0], np.ndarray): predictions[idx] = np.concatenate(est, axis=0) # Flatten inner array of predictions, such that we have predictions[] > estimators[] > samples[] > ground_truth
 
         # We have a matrix of estimators X predictions
         sorted_idx = np.argsort(predictions, axis=0) # sort based on the prediction-axis
