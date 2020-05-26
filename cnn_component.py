@@ -1,5 +1,6 @@
 from config_classes import hyperparameter_list, configuration
 import tensorflow as tf
+from sklearn.tree import DecisionTreeRegressor
 
 optimizer_dict = {'adadelta': tf.keras.optimizers.Adadelta(), 'adam': tf.keras.optimizers.Adam(), 'rmsprop': tf.keras.optimizers.RMSprop()}
 
@@ -21,6 +22,23 @@ def compile_model_cnn(data_shape, config: configuration, hyplist: hyperparameter
 
 def evaluate_model_cnn(trained_model, batched_test_data):
     return trained_model.evaluate(batched_test_data, verbose=2)
+
+def make_2d_array(dataset):
+    # Reshape 3D-array (slices x observations x samples) into 2D-array (slices x samples-samples-samples-samples-...)
+    slices, observations, samples = dataset.shape
+    return dataset.reshape((slices, observations*samples))
+
+class Model_DTR:
+    def __init__(self, max_depth):
+        self._max_depth = max_depth
+        self._model = DecisionTreeRegressor(max_depth = self._max_depth)
+
+    def fit_ada(self, x, y):
+        x = make_2d_array(x)
+        self._model.fit(x, y)
+
+    def predict(self, x):
+        return self._model.predict(make_2d_array(x))
 
 class Model_CNN:
     def __init__(self, datashape, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):

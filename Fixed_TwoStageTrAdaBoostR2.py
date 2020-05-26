@@ -81,7 +81,8 @@ class TwoStageTrAdaBoostR2:
     
     def Step3(self, estimator, X, Y):
         y_predict = estimator.predict(X)
-        y_predict = np.concatenate(y_predict, axis=0) # Flatten inner list
+        if isinstance(y_predict[0], np.ndarray):
+            y_predict = np.concatenate(y_predict, axis=0) # Flatten inner list
         error_vect = np.array([np.abs(y - y_truth) for y, y_truth in zip(y_predict, Y)])
         error_max = error_vect.max()
 

@@ -75,14 +75,15 @@ class AdaBoostR2:
         bootstrap_idx = np.array(bootstrap_idx, copy=False)
 
         # Fit on the bootstrapped sample and obtain a prediction for all samples in the training set
-        estimator.fit_ada(X[bootstrap_idx], y[bootstrap_idx]) 
+        estimator.fit_ada(X[bootstrap_idx], y[bootstrap_idx])
         # Fits on a total number of samples that is the same as what we started with, except each one is randomly selected (so there may be overlap, and some might not get chosen at all)
         # We only fit on the bootstrapped sample, however, later we predict on the entire sample - a way to avoid overfitting
         self.estimators_.append(estimator)  # add the fitted estimator
 
     def step_2(self, estimator, X, Y):
         y_predict = estimator.predict(X)
-        y_predict = np.concatenate(y_predict, axis=0) # Flatten inner list
+        if isinstance(y_predict[0], np.ndarray):
+            y_predict = np.concatenate(y_predict, axis=0) # Flatten inner list
         error_vect = np.array([np.abs(y - y_truth) for y, y_truth in zip(y_predict, Y)])
         error_max = error_vect.max()
 
@@ -185,7 +186,8 @@ class AdaBoostR2:
     def predict(self, X):
         # Evaluate predictions of all estimators
         predictions = [est.predict(X) for est in self.estimators_]
-        predictions = [np.concatenate(est, axis=0) for est in predictions] # Flatten inner array of predictions, such that we have predictions[] > estimators[] > samples[] > ground_truth
+        if isinstance(predictions[0], np.ndarray):
+            predictions = [np.concatenate(est, axis=0) for est in predictions] # Flatten inner array of predictions, such that we have predictions[] > estimators[] > samples[] > ground_truth
 
         # We have a matrix of estimators X predictions
         sorted_idx = np.argsort(predictions, axis=0) # sort based on the prediction-axis

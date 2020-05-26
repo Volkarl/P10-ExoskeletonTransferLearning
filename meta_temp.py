@@ -25,7 +25,7 @@ def objective(config: configuration, hyplist: hyperparameter_list, hyperparamete
     try:
         setup_windows_linux_pathing()
         #loss = run_plotting_experiments(config, hyplist, hyperparameter_dict)
-        loss = run_Baseline4(config, hyplist, hyperparameter_dict)
+        loss = run_Baseline6(config, hyplist, hyperparameter_dict)
         
         #loss_lst_4 = []
         #loss_lst_3 = []
@@ -299,8 +299,10 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
 
     # Create Exo-Ada
-    e, s, f, ss = 10, 10, 2, 0 #2,2,2,0#2, 10, 4, 0
+    e, s, f, ss = 100, 3, 2, 0 #2,2,2,0#2, 10, 4, 0
     print(f"You're about to run with arguments ({e}, {s}, {f}, {ss}), which equals fitting {(e*s*f) + (e*s) + s + (e*ss*f)} base learners")
+
+    #create_base_estimator_fn = lambda: cnn.Model_DTR(4)
     create_base_estimator_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
     regressor = ExoAda(create_base_estimator_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f, start_steps=ss)
     
