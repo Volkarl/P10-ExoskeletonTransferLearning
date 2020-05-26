@@ -23,16 +23,19 @@ from sklearn.metrics import mean_absolute_error
 
 class AdaBoostR2:
     def __init__(self,
-                 create_base_estimator_fn,
+                 basetrees_fn,
+                 basecnn_fn,
                  sample_size,
                  n_estimators = 50,
                  learning_rate = 1.,
                  random_state = np.random.mtrand._rand):
-        self.create_base_estimator_fn = create_base_estimator_fn
         self.sample_size = sample_size
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.random_state = random_state
+
+        self.basetrees_fn = basetrees_fn
+        self.create_base_estimator_fn = basecnn_fn
     
     @staticmethod
     def check_parameters(X, learning_rate, sample_size):
@@ -162,6 +165,8 @@ class AdaBoostR2:
         self.clear_results()
 
         for ada_iteration in range(self.n_estimators): # this for loop is sequential and does not support parallel(revison is needed if making parallel)
+            if ada_iteration > 0: self.create_base_estimator_fn = self.basetrees_fn
+
             sample_weights, estimator_weight, estimator_error = self.perform_boost(ada_iteration, X, y, sample_weights)
             # Early termination
             if sample_weights is None: # When estimator error gets too large, we terminate

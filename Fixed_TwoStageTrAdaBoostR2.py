@@ -25,15 +25,18 @@ import Fixed_AdaBoostR2 as Ada
 
 class TwoStageTrAdaBoostR2:
     def __init__(self,
-                 create_base_estimator_fn,
+
+                 basecnn_fn, 
+                 basetrees_fn,
+
                  sample_size,
                  n_estimators = 50,
                  steps = 10,
                  fold = 5,
                  learning_rate = 1.,
                  random_state = np.random.mtrand._rand,
-                 start_steps = 0):
-        self.create_base_estimator_fn = create_base_estimator_fn
+                 start_steps = 0,
+                 ):
         self.sample_size = sample_size
         self.n_estimators = n_estimators
         self.steps = steps
@@ -42,6 +45,8 @@ class TwoStageTrAdaBoostR2:
         self.random_state = random_state
 
         self.start_steps = start_steps
+        self.basetrees_fn = basetrees_fn
+        self.basecnn_fn = basecnn_fn
 
     def Step1(self, sample_weights, X_source, y_source, X_target, y_target):
         # Call AdaBoostR2, except dont allow it to change its source values
@@ -52,7 +57,7 @@ class TwoStageTrAdaBoostR2:
         source_weight = sample_weights[:-self.sample_size[-1]]
         for train, test in kf.split(X_target):
             cv_sample_size = [self.sample_size[0], len(train)]
-            model = Ada.AdaBoostR2(self.create_base_estimator_fn, cv_sample_size, self.n_estimators, self.learning_rate, self.random_state)
+            model = Ada.AdaBoostR2(self.basetrees_fn, self.basecnn_fn, cv_sample_size, self.n_estimators, self.learning_rate, self.random_state)
             X_train = np.concatenate((X_source, X_target[train]))
             y_train = np.concatenate((y_source, y_target[train]))
             X_test = X_target[test]
@@ -164,7 +169,7 @@ class TwoStageTrAdaBoostR2:
     def adjust_source_weights(self, step, sample_weights, X, y, X_source, y_source, X_target, y_target, target_init_weight_percent):
         # This function is to ensure that the algorithm gets some time to shuffle weights around in our multiple source domains and attempts to find which ones are most similar to target
         # Before we run the "real" two-stage tradaboost and starts scaling up the importance of the target domain, whilst scaling down the importance of the source domain
-        model = Ada.AdaBoostR2(self.create_base_estimator_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
+        model = Ada.AdaBoostR2(self.basetrees_fn, self.basecnn_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
         model.fit(X, y, sample_weights)
         self.sample_weights_.append(np.copy(sample_weights)) # We do add this one to the list, purely for debugging purposes
         self.models_.append(model) 
@@ -195,7 +200,7 @@ class TwoStageTrAdaBoostR2:
             self.adjust_source_weights(start_step, sample_weights, X, y, X_source, y_source, X_target, y_target, target_init_weight_percent)
 
         for s in range(self.steps):
-            model = Ada.AdaBoostR2(self.create_base_estimator_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
+            model = Ada.AdaBoostR2(self.basetrees_fn, self.basecnn_fn, self.sample_size, self.n_estimators, self.learning_rate, self.random_state)
             self.sample_weights_.append(np.copy(sample_weights))
             model.fit(X, y, sample_weights)                                                                     # NOTE Fits amount of times: steps * estimators
             self.models_.append(model)
@@ -219,7 +224,7 @@ class TwoStageTrAdaBoostR2:
 
     def perform_second_stage_boost(self, step, X, y, sample_weights, target_init_weight_percent):
         # This is where we are going to change the source weights
-        estimator = self.create_base_estimator_fn()
+        estimator = self.basecnn_fn()
         estimator = self.Step2(sample_weights, X, y, estimator)
         # Update the weight vector
         error_vect = self.Step3(estimator, X, y)
