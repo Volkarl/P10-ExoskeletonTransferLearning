@@ -23,7 +23,6 @@ def compile_model_cnn(data_shape, config: configuration, hyplist: hyperparameter
 def evaluate_model_cnn(trained_model, batched_test_data):
     return trained_model.evaluate(batched_test_data, verbose=2)
 
-
 def make_2d_array(dataset):
     # Reshape 3D-array (slices x observations x samples) into 2D-array (slices x samples-samples-samples-samples-...)
     slices, observations, samples = dataset.shape
@@ -40,7 +39,6 @@ class Model_DTR:
 
     def predict(self, x):
         return self._model.predict(make_2d_array(x))
-
 
 class Model_CNN:
     def __init__(self, datashape, config: configuration, hyplist: hyperparameter_list, hyperparameter_dict):

@@ -222,10 +222,11 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Two-Stage AdaBoost.R2 out-of-the-box (using regression decision trees)
     # Train set: Source is person A + person B. Target is 4/5th of person C.
     # Test set: 1/5th of person C
+    
     people = config.get_people_iterator()
-    source_A_files = people[0][:1]#NOTE
-    source_B_files = people[1][:1]
-    target_C_files = people[2][:1]
+    source_A_files = people[0][:5]
+    source_B_files = people[1][:5]
+    target_C_files = people[2][:4]
     test_files = people[2][4:]
 
     sessions_A_source = unpack_sessions(source_A_files, config, hyplist, hyperparameter_dict, True)
@@ -244,7 +245,7 @@ def run_Baseline5(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
 
     # Create default tradaboost estimator
-    e, s, f = 2, 2, 2
+    e, s, f = 20, 10, 3
     print(f"You're about to run with arguments ({e}, {s}, {f}), which equals fitting {(e*s*f) + (e*s) + s} base learners")
     regressor = TwoStageTrAdaBoostR2(sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f)
     regressor.fit(sliced_X_train, sliced_Y_train)
@@ -274,9 +275,9 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Test set: 1/5th of person C
 
     people = config.get_people_iterator()
-    source_A_files = people[0][:1]#5
-    source_B_files = people[1][:1]#5
-    target_C_files = people[2][:1]#4
+    source_A_files = people[0][:5]
+    source_B_files = people[1][:5]
+    target_C_files = people[2][:4]
     test_files = people[2][4:]
 
     sessions_A_source = unpack_sessions(source_A_files, config, hyplist, hyperparameter_dict, True)
@@ -294,10 +295,12 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sliced_Y_train = np.concatenate(sliced_Y_train, axis=0) # Flatten inner lists that contain one element each
 
     # Create Exo-Ada
-    e, s, f, ss = 2, 2, 2, 0 
+    e, s, f, ss = 5, 10, 3, 0 
     print(f"You're about to run with arguments ({e}, {s}, {f}, {ss}), which equals fitting {(e*s*f) + (e*s) + s + (e*ss*f)} base learners")
     create_base_cnn_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
-    create_base_trees_fn = lambda: cnn.Model_DTR(4)
+    create_base_trees_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
+    #create_base_cnn_fn = lambda: cnn.Model_DTR(4)
+    #create_base_trees_fn = lambda: cnn.Model_DTR(4)
     regressor = ExoAda(create_base_cnn_fn, create_base_trees_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f, start_steps=ss)
     
     # Initializing weights such that each dataset has a percentage to 1 / n_samples
@@ -308,7 +311,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sample_weights[len_A:len_A+len_B] = weight_per_dataset / len_B
     sample_weights[len_A+len_B:len_A+len_B+len_C] = weight_per_dataset / len_C
 
-    regressor.fit(sliced_X_train, sliced_Y_train, sample_weights, weight_per_dataset, False) #TODO TRY WITH TRUE
+    regressor.fit(sliced_X_train, sliced_Y_train, sample_weights, weight_per_dataset, True)
 
     # Plot sample_weights for the datasets across time
     weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C), True, "baseline6")
