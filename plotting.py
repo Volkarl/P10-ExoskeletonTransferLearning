@@ -163,10 +163,10 @@ def plot_dataset_comparison(config: configuration, hyplist: hyperparameter_list,
     print("end")
 
 
-def plot_ablation_study():
+def plot_ablation_study(): # is run with 5/10/3
     x = [ 1, 2, 3, 4 ]
-    labels = [ "Exo-Ada", "Exo-Ada w/o BaseCNN", "Exo-Ada w/o Multi-Domain", "Exo-Ada w/o Multi-Domain & BaseCNN" ]
-    b6 = [ 0.14948451317179137, 0.1568888250433344, 0, 0 ]
+    labels = [ "Exo-Ada", "Exo-Ada w/o BaseCNN", "Exo-Ada w/o Multi-Domain", "2-Stage TrAdaBoost" ]
+    b6 = [ 0.14948451317179137, 0.1568888250433344, 0.15388176396547415, 0.1481531452799892 ]
 
     plt.figure()
     plt.plot(x, b6, "m*-", markerfacecolor='none', linewidth=1)
@@ -182,15 +182,15 @@ def plot_ablation_study():
 def plot_estimator_reduc_accuracy_comparison():
     x = [ 5, 10, 15, 20, 25 ]
     b5 = [ 0.1555330507508396, 0.14826824963938826, 0.14427301085729652, 0.14062949540356182, 0.15158738720870604 ]
-    b6 = [ 0.14948451317179137, 0, 0, 0, 0.1522692119494696 ]
+    b6 = [ 0.14948451317179137, 0.15511536357815509, 0.1499810981641296, 0.14686213174025406, 0.1522692119494696 ]
 
     plt.figure()
     plt.plot(x, b5, "cs--", markerfacecolor='none', label="2-Stage TrAdaBoost", linewidth=1)
     plt.plot(x, b6, "m*-", markerfacecolor='none', label="Exo-Ada", linewidth=1)
     plt.xlabel("N Estimators")
     plt.ylabel("MAE")
-    plt.xticks(np.arange(min(x), max(x) + 1, 1.0))
-    plt.title("Accuracy as Dependant on Amount of Estimators")
+    plt.xticks(x)
+    plt.title("Error Over Amount of Estimators")
     plt.legend(frameon=False, markerfirst=False)
 
     plt.show()
@@ -208,16 +208,14 @@ def plot_target_accuracy_comparison():
     # b5 = [ 0.26691386234082237, 0.16560964867924088, 0.1424645339127848, 0.13751412682697559 ]
     b5 = [ 0.323813768059448, 0.14684078401158776, 0.15371555521185734, 0.15158738720870604 ] # NEW B5
     # NOTE THAT THE 2-person 25,10,3 B5 needs to be re-run. This seems bullshit.
-
-    # dummy values below
-    b6 = [ 0.19, 0.18, 0.17, 0.16 ]
+    b6 = [ 0.18876090789241787, 0.1740548223383503, 0.17671658026879764, 0.14948451317179137 ]
 
     plt.figure()
     plt.plot(x, b1, "bx:", markerfacecolor='none', label="CNN_Small", linewidth=1)
     plt.plot(x, b2, "g+--", markerfacecolor='none', label="CNN_Big", linewidth=1)
     plt.plot(x, b4, "r>-.", markerfacecolor='none', label="Ensemble", linewidth=1)
     plt.plot(x, b5, "cs--", markerfacecolor='none', label="2-Stage TrAdaBoost", linewidth=1)
-    #plt.plot(x, b6, "m*-", markerfacecolor='none', label="Exo-Ada", linewidth=1)
+    plt.plot(x, b6, "m*-", markerfacecolor='none', label="Exo-Ada", linewidth=1)
     plt.xlabel("Person C Sessions")
     plt.ylabel("MAE")
     plt.xticks(np.arange(min(x), max(x) + 1, 1.0))
