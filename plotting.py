@@ -6,12 +6,18 @@ from data_manager_component import process_sheet_no_slice
 from config_classes import hyperparameter_list, configuration
 
 def read_saved_data(savename):
-        comp_data = pickle.load(open(f"comp_data_{savename}.p", "rb"))
-        hist_data = pickle.load(open(f"hist_data_{savename}.p", "rb"))
-        weights_data = pickle.load(open(f"weights_data_{savename}.p", "rb"))
-        print("Stop")
+    comp_data = pickle.load(open(f"comp_data_{savename}.p", "rb"))
+    hist_data = pickle.load(open(f"hist_data_{savename}.p", "rb"))
+    weights_data = pickle.load(open(f"weights_data_{savename}.p", "rb"))
+    print("Stop")
 
-# read_saved_data("baseline5")
+    #weights_across_time(weights_data, 7624, 8960, 7373, False, savename)
+    
+    #pad_lst = lambda lst, n: [el for el in lst for _ in range(n)] 
+    #test, exo = pad_lst(comp_data["Person C Test Set"], 30)[35000:], pad_lst(comp_data["Exo-Ada"], 30)[35000:]
+    #make_simple_comparison_plot(test, "Test Session", exo, "Exo-Ada", "Time (1 ms)", "Radians", "Elbow Angle Estimation", False, savename)
+
+# read_saved_data("baseline6")
 
 def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_name, title = None, do_savefig = False, savename = None):
     pickle.dump( { y1_name : y1, y2_name : y2 } , open(f"comp_data_{savename}.p", "wb"))
@@ -19,11 +25,14 @@ def make_simple_comparison_plot(y1, y1_name, y2, y2_name, x_axis_name, y_axis_na
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
     ax.plot(y1, c="b", label=y1_name, linewidth=0.5)
-    ax.plot(y2, c="r", label=y2_name, linewidth=2)
+    ax.plot(y2, c="r", label=y2_name, linewidth=1)
+    #ax.set_yticks([0.0, 0.5, 1.0, 1.5, 2.0])
     ax.set_xlabel(x_axis_name)
     ax.set_ylabel(y_axis_name)
     if title != None: ax.set_title(title)
     ax.legend()
+    #ax.legend(loc="upper right")
+
     if do_savefig: fig.savefig(f'comp_{savename}.png')
     else: plt.show()
 
@@ -41,7 +50,6 @@ def plot_multiple_comparisons(y_lists, labels, colors, xlabel, ylabel, title):
 
 def stacked_histogram(stacked_hist_values, errors, colors = ['b','g', 'r', 'c', 'm', 'y', 'k', 'lime', 'purple', 'crimson'], do_savefig = False, savename = None):
     pickle.dump( { "stacked_hist_values" : stacked_hist_values, "errors" : errors } , open(f"hist_data_{savename}.p", "wb"))
-    
     
     cols = []
     for i in range(stacked_hist_values.shape[1]):
@@ -86,6 +94,16 @@ def weights_across_time(sample_weights_across_steps, len_A, len_B, len_C, do_sav
         y_A.append(np.sum(sw_A))
         y_B.append(np.sum(sw_B))
         y_C.append(np.sum(sw_C))
+
+    #fig = plt.figure()
+    #ax = fig.add_subplot(2,2,1)
+    #ax.plot(y_A, c="b", label=f"Source A", linewidth=1)
+    #ax.plot(y_B, c="r", label=f"Source B", linewidth=1)
+    #ax.plot(y_C, c="y", label=f"Target C", linewidth=1)
+    #ax.set_xlabel("Boosting Step")
+    #ax.set_ylabel("Total Dataset Weight")
+    #ax.set_title("Sample Weight Distributions")
+    #ax.legend()
 
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -162,22 +180,28 @@ def plot_dataset_comparison(config: configuration, hyplist: hyperparameter_list,
     plt.show()
     print("end")
 
-
 def plot_ablation_study(): # is run with 5/10/3
     x = [ 1, 2, 3, 4 ]
-    labels = [ "Exo-Ada", "Exo-Ada w/o BaseCNN", "Exo-Ada w/o Multi-Domain", "2-Stage TrAdaBoost" ]
+    # labels = [ "Exo-Ada", "Exo-Ada w/o BaseCNN", "Exo-Ada w/o Multi-Domain", "2-Stage TrAdaBoost" ] 
+    labels = [ "Exo-Ada", "E-Regr", "E-Single", "2-Stage" ] 
     b6 = [ 0.14948451317179137, 0.1568888250433344, 0.15388176396547415, 0.1481531452799892 ]
+    text = [ 0.149, 0.157, 0.154, 0.148 ]
 
-    plt.figure()
-    plt.plot(x, b6, "m*-", markerfacecolor='none', linewidth=1)
-    plt.ylabel("MAE")
-    plt.xticks(x, labels)
-    plt.title("Accuracy as Dependant on Amount of Estimators")
-    plt.legend(frameon=False, markerfirst=False)
+    fig = plt.figure()
+    ax = fig.add_subplot(2,2,1)
+    ax.bar(x, b6, color = ["m", "r", "b", "c"], alpha = 0.7)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("MAE")
+    ax.set_title("Ablation Study")
+
+    for index, value in enumerate(b6):
+        plt.text(x=index + 1, y=value - 0.02, s=text[index], ha='center') #Change font size with: fontdict=dict(fontsize=20)
 
     plt.show()
     print("end")
 
+# plot_ablation_study()
 
 def plot_estimator_reduc_accuracy_comparison():
     x = [ 5, 10, 15, 20, 25 ]
@@ -199,23 +223,19 @@ def plot_estimator_reduc_accuracy_comparison():
 # plot_estimator_reduc_accuracy_comparison()
 
 def plot_target_accuracy_comparison():
-
     x = [1, 2, 3, 4]
     b1 = [ 0.46204124166973287, 0.5145204290302875, 0.348631253080425, 0.16115500314396838 ]
     b2 = [ 0.18753941475931857, 0.17503625891662256, 0.17703442328322402, 0.16213747466457573 ]
-    # b3 
     b4 = [ 0.23851535677450605, 0.2701332927192523, 0.2126576669858217, 0.18190372315629796 ]
-    # b5 = [ 0.26691386234082237, 0.16560964867924088, 0.1424645339127848, 0.13751412682697559 ]
-    b5 = [ 0.323813768059448, 0.14684078401158776, 0.15371555521185734, 0.15158738720870604 ] # NEW B5
-    # NOTE THAT THE 2-person 25,10,3 B5 needs to be re-run. This seems bullshit.
+    b5 = [ 0.323813768059448, 0.15258097422374503, 0.15371555521185734, 0.15158738720870604 ]
     b6 = [ 0.18876090789241787, 0.1740548223383503, 0.17671658026879764, 0.14948451317179137 ]
 
     plt.figure()
-    plt.plot(x, b1, "bx:", markerfacecolor='none', label="CNN_Small", linewidth=1)
-    plt.plot(x, b2, "g+--", markerfacecolor='none', label="CNN_Big", linewidth=1)
-    plt.plot(x, b4, "r>-.", markerfacecolor='none', label="Ensemble", linewidth=1)
-    plt.plot(x, b5, "cs--", markerfacecolor='none', label="2-Stage TrAdaBoost", linewidth=1)
-    plt.plot(x, b6, "m*-", markerfacecolor='none', label="Exo-Ada", linewidth=1)
+    plt.plot(x, b6, "m*-", markerfacecolor='none', label="Exo-Ada", linewidth=1.5)
+    plt.plot(x, b5, "cs--", markerfacecolor='none', label="2-Stage TrAdaBoost", linewidth=1.5)
+    plt.plot(x, b4, "r>-.", markerfacecolor='none', label="Ensemble", linewidth=1.5)
+    plt.plot(x, b2, "g+--", markerfacecolor='none', label="CNN_Big", linewidth=1.5)
+    plt.plot(x, b1, "bx:", markerfacecolor='none', label="CNN_Small", linewidth=1.5)
     plt.xlabel("Person C Sessions")
     plt.ylabel("MAE")
     plt.xticks(np.arange(min(x), max(x) + 1, 1.0))
@@ -225,5 +245,4 @@ def plot_target_accuracy_comparison():
     plt.show()
     print("end")
 
-
-#plot_target_accuracy_comparison()
+# plot_target_accuracy_comparison()
