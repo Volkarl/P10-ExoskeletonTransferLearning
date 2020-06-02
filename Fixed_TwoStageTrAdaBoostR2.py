@@ -111,11 +111,11 @@ class TwoStageTrAdaBoostR2:
         if istep == self.steps - 1: return 0. # for the last iteration step, beta is 0.
 
         # calculate the specified sum of weight for the target data
-        # n_source = self.sample_size[0]
+        n_source = self.sample_size[0]
         n_target = self.sample_size[-1]
 
-        # OLD theoretical_sum = n_target/(n_source+n_target) + istep/(self.steps-1)*(1-n_target/(n_source+n_target)) 
-        theoretical_sum = target_init_weight_percent + istep/(self.steps-1)*(1-target_init_weight_percent) 
+        theoretical_sum = n_target/(n_source+n_target) + istep/(self.steps-1)*(1-n_target/(n_source+n_target)) 
+        #theoretical_sum = target_init_weight_percent + istep/(self.steps-1)*(1-target_init_weight_percent) 
             # # So with 3 datasets, where one is target, at index 0 the target stays at 33% importance, and at index 1 it increase to 66%, and index 2 is where we stop
             # The theoretical sum can be written as basically: percent_of_dataset_that_is_target + how_far_we_are_through_total_boosting_steps * percent_of_dataset_that_is_NOT_target
             # This value increases as we get further through out total boosting steps

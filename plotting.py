@@ -183,7 +183,7 @@ def plot_dataset_comparison(config: configuration, hyplist: hyperparameter_list,
 def plot_ablation_study(): # is run with 5/10/3
     x = [ 1, 2, 3, 4 ]
     # labels = [ "Exo-Ada", "Exo-Ada w/o BaseCNN", "Exo-Ada w/o Multi-Domain", "2-Stage TrAdaBoost" ] 
-    labels = [ "Exo-Ada", "E-Regr", "E-Single", "2-Stage" ] 
+    labels = [ "Exo-Ada", "E-Regr", "E-Singl", "2-Stage" ] 
     b6 = [ 0.14948451317179137, 0.1568888250433344, 0.15388176396547415, 0.1481531452799892 ]
     text = [ 0.149, 0.157, 0.154, 0.148 ]
 
@@ -192,6 +192,7 @@ def plot_ablation_study(): # is run with 5/10/3
     ax.bar(x, b6, color = ["m", "r", "b", "c"], alpha = 0.7)
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
+    ax.set_xlabel("Boosting Models")
     ax.set_ylabel("MAE")
     ax.set_title("Ablation Study")
 

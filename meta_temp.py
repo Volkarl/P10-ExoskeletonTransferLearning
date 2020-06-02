@@ -277,7 +277,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     people = config.get_people_iterator()
     source_A_files = people[0][:5]
     source_B_files = people[1][:5]
-    target_C_files = people[2][:4]
+    target_C_files = people[2][:1]
     test_files = people[2][4:]
 
     sessions_A_source = unpack_sessions(source_A_files, config, hyplist, hyperparameter_dict, True)
@@ -297,10 +297,10 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     # Create Exo-Ada
     e, s, f, ss = 5, 10, 3, 0 
     print(f"You're about to run with arguments ({e}, {s}, {f}, {ss}), which equals fitting {(e*s*f) + (e*s) + s + (e*ss*f)} base learners")
-    create_base_cnn_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
-    create_base_trees_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
-    #create_base_cnn_fn = lambda: cnn.Model_DTR(4)
-    #create_base_trees_fn = lambda: cnn.Model_DTR(4)
+    #create_base_cnn_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
+    #create_base_trees_fn = lambda: cnn.Model_CNN(sessions_A_source[0].datashape, config, hyplist, hyperparameter_dict)
+    create_base_cnn_fn = lambda: cnn.Model_DTR(4)
+    create_base_trees_fn = lambda: cnn.Model_DTR(4)
     regressor = ExoAda(create_base_cnn_fn, create_base_trees_fn, sample_size=[len(sliced_X_source_A) + len(sliced_X_source_B), len(sliced_X_target_C)], n_estimators=e, steps=s, fold=f, start_steps=ss)
     
     # Initializing weights such that each dataset has a percentage to 1 / n_samples
@@ -311,7 +311,7 @@ def run_Baseline6(config: configuration, hyplist: hyperparameter_list, hyperpara
     sample_weights[len_A:len_A+len_B] = weight_per_dataset / len_B
     sample_weights[len_A+len_B:len_A+len_B+len_C] = weight_per_dataset / len_C
 
-    regressor.fit(sliced_X_train, sliced_Y_train, sample_weights, weight_per_dataset, True)
+    regressor.fit(sliced_X_train, sliced_Y_train, None, weight_per_dataset, True)
 
     # Plot sample_weights for the datasets across time
     weights_across_time(regressor.sample_weights_, len(sliced_X_source_A), len(sliced_X_source_B), len(sliced_X_target_C), True, "baseline6")
