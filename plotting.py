@@ -183,9 +183,21 @@ def plot_dataset_comparison(config: configuration, hyplist: hyperparameter_list,
 def plot_ablation_study(): # is run with 5/10/3
     x = [ 1, 2, 3, 4 ]
     # labels = [ "Exo-Ada", "Exo-Ada w/o BaseCNN", "Exo-Ada w/o Multi-Domain", "2-Stage TrAdaBoost" ] 
-    labels = [ "Exo-Ada", "E-Regr", "E-Singl", "2-Stage" ] 
-    b6 = [ 0.14948451317179137, 0.1568888250433344, 0.15388176396547415, 0.1481531452799892 ]
-    text = [ 0.149, 0.157, 0.154, 0.148 ]
+    labels = [ "Exo-Ada", "E-Singl", "E-Regr", "2-Stage" ] 
+
+    # New values from the 1 person ablation study, with 3 attempts each
+    b6_1ppl = [ 
+                [ 0.17462705783349125, 0.1883617035682791, 0.18876090789241787 ], 
+                [ 0.18299064285450684, 0.18940759386429065, 0.1969866379897603 ], 
+                [ 0.28838086979046285, 0.3117410364356528, 0.35857689481985766 ], 
+                [ 0.3486774443391116, 0.2620729816330504, 0.3565787659261429 ] 
+              ]
+    b6 = [ np.mean(lst) for lst in b6_1ppl ]
+    text = [ format(round(nbr, 3), '.3f') for nbr in b6 ]
+
+    # Old values from the 4 person ablation study
+    #b6 = [ 0.14948451317179137, 0.1568888250433344, 0.15388176396547415, 0.1481531452799892 ]
+    #text = [ 0.149, 0.157, 0.154, 0.148 ]
 
     fig = plt.figure()
     ax = fig.add_subplot(2,2,1)
@@ -197,12 +209,12 @@ def plot_ablation_study(): # is run with 5/10/3
     ax.set_title("Ablation Study")
 
     for index, value in enumerate(b6):
-        plt.text(x=index + 1, y=value - 0.02, s=text[index], ha='center') #Change font size with: fontdict=dict(fontsize=20)
+        plt.text(x=index + 1, y=value - 0.035, s=text[index], ha='center') #Change font size with: fontdict=dict(fontsize=20)
 
     plt.show()
     print("end")
 
-# plot_ablation_study()
+plot_ablation_study()
 
 def plot_estimator_reduc_accuracy_comparison():
     x = [ 5, 10, 15, 20, 25 ]
